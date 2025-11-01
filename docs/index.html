@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مبانی و الگوریتم‌های کلان‌داده | احسان شهبازی</title>
+    <meta name="description" content="درسنامه جامع، آکادمیک و درس به درس کلان‌داده بر اساس کتاب مرجع Mining of Massive Datasets (MMDS) دانشگاه استنفورد، گردآوری شده توسط احسان شهبازی.">
+    <meta name="author" content="احسان شهبازی (Ehsan Shahbazi)">
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <a href="#" class="brand">
+                <div class="brand-icon">BD</div>
+                <span>کلان‌داده (MMDS)</span>
+            </a>
+            <div class="nav-actions">
+                <a href="index_en.html" class="icon-btn" title="Switch to English">
+                    <span>🌐 English</span>
+                </a>
+                <button id="theme-toggle" class="icon-btn" aria-label="تغییر تم">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <a href="https://github.com/EhsanShahbazii" target="_blank" rel="noopener noreferrer" class="icon-btn">
+                    <span>گیت‌هاب</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-badge">
+                <span>📚 مرجع دانشگاه استنفورد (Mining of Massive Datasets)</span>
+            </div>
+            <h1 class="hero-title">مبانی و الگوریتم‌های کلان‌داده</h1>
+            <p class="hero-subtitle">
+                درسنامه جامع آکادمیک، فرمول‌بندی‌های تحلیلی، اثبات‌های ریاضی و پیاده‌سازی‌های الگوریتمی در مقیاس وب و کلان‌داده
+            </p>
+
+            <div class="author-pill">
+                <div class="author-avatar">اش</div>
+                <div class="author-info">
+                    <span>گردآورنده و پژوهشگر:</span>
+                    <a href="https://github.com/EhsanShahbazii" target="_blank" rel="noopener noreferrer" class="author-name" style="text-decoration:none;">احسان شهبازی</a>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">(Ehsan Shahbazi)</span>
+                </div>
+            </div>
+
+            <div class="hero-cta">
+                <a href="pdfs/BigData_Course_Notes_Full.pdf" download class="btn-primary">
+                    <span>📥 دانلود کتاب کامل (۸۱ صفحه PDF)</span>
+                </a>
+                <a href="#chapters" class="btn-secondary">
+                    <span>📑 مشاهده و دانلود فصل‌به‌فصل</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Stats Grid -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">۱۳</div>
+                <div class="stat-label">فصل تخصصی و جامع</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">۸۱</div>
+                <div class="stat-label">صفحه متن مدون و فشرده</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">۱۰۰+</div>
+                <div class="stat-label">قضیه، الگوریتم و اثبات ریاضی</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">۰</div>
+                <div class="stat-label">خطای چیدمان (Zero Overfull)</div>
+            </div>
+        </section>
+
+        <!-- Chapter Filter & Search Bar -->
+        <section id="chapters" class="controls-bar">
+            <div class="search-wrapper">
+                <input type="text" id="search-input" class="search-input" placeholder="🔍 جستجو در فصول، الگوریتم‌ها و مفاهیم (مثلاً MapReduce, PageRank, LSH, SVM)...">
+            </div>
+            <div class="filter-pills">
+                <button class="pill-btn active" data-part="all">همه فصول (۱۴)</button>
+                <button class="pill-btn" data-part="preface">پیش‌گفتار</button>
+                <button class="pill-btn" data-part="part1">بخش اول: مبانی و رایانش توزیع‌شده</button>
+                <button class="pill-btn" data-part="part2">بخش دوم: جریان‌های داده و وب</button>
+                <button class="pill-btn" data-part="part3">بخش سوم: خوشه‌بندی و سامانه‌های وب</button>
+                <button class="pill-btn" data-part="part4">بخش چهارم: شبکه‌های اجتماعی و کاهش بعد</button>
+                <button class="pill-btn" data-part="part5">بخش پنجم: یادگیری مقیاس‌بزرگ و عمیق</button>
+            </div>
+        </section>
+
+        <!-- Chapters Grid -->
+        <div class="chapters-grid">
+
+            <!-- Preface -->
+            <div class="chapter-card" data-part="preface">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">پیش‌گفتار</span>
+                        <span class="page-count">۴ صفحه (ص ۱–۴)</span>
+                    </div>
+                    <h3 class="chapter-title">پیش‌گفتار: کلان‌داده و مبانی محاسبات مقیاس‌پذیر</h3>
+                    <p class="chapter-subtitle">Preface: Big Data & Scalable Computing Fundamentals</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">مبانی کلان‌داده</span>
+                        <span class="topic-tag">شناسنامه اثر</span>
+                        <span class="topic-tag">نقشه راه فصول</span>
+                        <span class="topic-tag">مرجع MMDS</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter00_Preface.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter00_Preface.pdf" data-title="پیش‌گفتار: کلان‌داده و مبانی محاسبات مقیاس‌پذیر">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 01 -->
+            <div class="chapter-card" data-part="part1">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل اول</span>
+                        <span class="page-count">۶ صفحه (ص ۱۰–۱۴)</span>
+                    </div>
+                    <h3 class="chapter-title">داده‌کاوی و فضاهای با بعد بالا</h3>
+                    <p class="chapter-subtitle">Chapter 01: Data Mining & High-Dimensional Spaces</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">اصل بونفرونی</span>
+                        <span class="topic-tag">فضاهای با بعد بالا</span>
+                        <span class="topic-tag">TF-IDF</span>
+                        <span class="topic-tag">قوانین توانی (Power Law)</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter01_DataMining_HighDimensional.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter01_DataMining_HighDimensional.pdf" data-title="فصل اول: داده‌کاوی و فضاهای با بعد بالا">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 02 -->
+            <div class="chapter-card" data-part="part1">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل دوم</span>
+                        <span class="page-count">۶ صفحه (ص ۱۵–۱۹)</span>
+                    </div>
+                    <h3 class="chapter-title">نگاشت-کاهش و پشته نرم‌افزاری پردازش توزیع‌شده</h3>
+                    <p class="chapter-subtitle">Chapter 02: MapReduce & Distributed Computing Stack</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">معماری HDFS</span>
+                        <span class="topic-tag">گردش کار MapReduce</span>
+                        <span class="topic-tag">ضرب ماتریس‌ها</span>
+                        <span class="topic-tag">جبر رابطه‌ای</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter02_MapReduce_HDFS.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter02_MapReduce_HDFS.pdf" data-title="فصل دوم: نگاشت-کاهش و پشته نرم‌افزاری توزیع‌شده">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 03 -->
+            <div class="chapter-card" data-part="part1">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل سوم</span>
+                        <span class="page-count">۸ صفحه (ص ۲۰–۲۶)</span>
+                    </div>
+                    <h3 class="chapter-title">یافتن آیتم‌های مشابه و درهم‌سازی حساس به مکان (LSH)</h3>
+                    <p class="chapter-subtitle">Chapter 03: Finding Similar Items & LSH</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">شینگلینگ (Shingling)</span>
+                        <span class="topic-tag">Min-Hashing</span>
+                        <span class="topic-tag">تکنیک Banding</span>
+                        <span class="topic-tag">منحنی اس-شکل (S-Curve)</span>
+                        <span class="topic-tag">تشابه جاکارد</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter03_Finding_Similar_Items_LSH.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter03_Finding_Similar_Items_LSH.pdf" data-title="فصل سوم: یافتن آیتم‌های مشابه و LSH">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 04 -->
+            <div class="chapter-card" data-part="part2">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل چهارم</span>
+                        <span class="page-count">۹ صفحه (ص ۲۸–۳۵)</span>
+                    </div>
+                    <h3 class="chapter-title">کاوش جریان‌های داده (Mining Data Streams)</h3>
+                    <p class="chapter-subtitle">Chapter 04: Mining Data Streams & Real-Time Analytics</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">نمونه‌برداری مخزنی (Reservoir)</span>
+                        <span class="topic-tag">فیلتر بلوم (Bloom Filter)</span>
+                        <span class="topic-tag">الگوریتم Flajolet-Martin</span>
+                        <span class="topic-tag">الگوریتم DGIM</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter04_Mining_Data_Streams.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter04_Mining_Data_Streams.pdf" data-title="فصل چهارم: کاوش جریان‌های داده">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 05 -->
+            <div class="chapter-card" data-part="part2">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل پنجم</span>
+                        <span class="page-count">۷ صفحه (ص ۳۶–۴۱)</span>
+                    </div>
+                    <h3 class="chapter-title">تحلیل پیوندها و رتبه‌بندی وب (Link Analysis & PageRank)</h3>
+                    <p class="chapter-subtitle">Chapter 05: Link Analysis & Web PageRank</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">الگوریتم PageRank</span>
+                        <span class="topic-tag">تکرار توانی (Power Iteration)</span>
+                        <span class="topic-tag">تله عنکبوتی و بن‌بست</span>
+                        <span class="topic-tag">مدل پاپیونی (Bow-Tie)</span>
+                        <span class="topic-tag">الگوریتم HITS</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter05_LinkAnalysis_PageRank.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter05_LinkAnalysis_PageRank.pdf" data-title="فصل پنجم: تحلیل پیوندها و PageRank">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 06 -->
+            <div class="chapter-card" data-part="part2">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل ششم</span>
+                        <span class="page-count">۶ صفحه (ص ۴۲–۴۶)</span>
+                    </div>
+                    <h3 class="chapter-title">مجموعه‌آیتم‌های پرتکرار و قوانین انجمنی</h3>
+                    <p class="chapter-subtitle">Chapter 06: Frequent Itemsets & Association Rules</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">الگوریتم A-Priori</span>
+                        <span class="topic-tag">الگوریتم PCY</span>
+                        <span class="topic-tag">الگوریتم‌های Multistage و Multihash</span>
+                        <span class="topic-tag">الگوریتم توزیع‌شده SON</span>
+                        <span class="topic-tag">الگوریتم Toivonen</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter06_Frequent_Itemsets.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter06_Frequent_Itemsets.pdf" data-title="فصل ششم: مجموعه‌آیتم‌های پرتکرار">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 07 -->
+            <div class="chapter-card" data-part="part3">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل هفتم</span>
+                        <span class="page-count">۶ صفحه (ص ۴۸–۵۲)</span>
+                    </div>
+                    <h3 class="chapter-title">خوشه‌بندی در فضاهای با بعد بالا (High-Dimensional Clustering)</h3>
+                    <p class="chapter-subtitle">Chapter 07: High-Dimensional Clustering (BFR & CURE)</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">الگوریتم K-Means++</span>
+                        <span class="topic-tag">الگوریتم BFR</span>
+                        <span class="topic-tag">فاصله ماهالانوبیس</span>
+                        <span class="topic-tag">الگوریتم CURE</span>
+                        <span class="topic-tag">خوشه‌های غیرکروی</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter07_Clustering_Massive_Data.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter07_Clustering_Massive_Data.pdf" data-title="فصل هفتم: خوشه‌بندی در فضاهای با بعد بالا">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 08 -->
+            <div class="chapter-card" data-part="part3">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل هشتم</span>
+                        <span class="page-count">۵ صفحه (ص ۵۳–۵۶)</span>
+                    </div>
+                    <h3 class="chapter-title">تبلیغات برخط در وب (Online Advertising & AdWords)</h3>
+                    <p class="chapter-subtitle">Chapter 08: Online Advertising & Google AdWords</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">تطابق دوبخشی برخط</span>
+                        <span class="topic-tag">نسبت رقابتی (Competitive Ratio)</span>
+                        <span class="topic-tag">الگوریتم BALANCE</span>
+                        <span class="topic-tag">حراج قیمت دوم (GSP)</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter08_Online_Advertising.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter08_Online_Advertising.pdf" data-title="فصل هشتم: تبلیغات برخط در وب">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 09 -->
+            <div class="chapter-card" data-part="part3">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل نهم</span>
+                        <span class="page-count">۵ صفحه (ص ۵۷–۶۰)</span>
+                    </div>
+                    <h3 class="chapter-title">سامانه‌های توصیه‌گر (Recommender Systems)</h3>
+                    <p class="chapter-subtitle">Chapter 09: Recommender Systems & Matrix Factorization</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">ماتریس سودمندی (Utility)</span>
+                        <span class="topic-tag">فیلترینگ مشارکتی (CF)</span>
+                        <span class="topic-tag">همبستگی پیرسون</span>
+                        <span class="topic-tag">فاکتورسازی ماتریسی UV با SGD</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter09_Recommender_Systems.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter09_Recommender_Systems.pdf" data-title="فصل نهم: سامانه‌های توصیه‌گر">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 10 -->
+            <div class="chapter-card" data-part="part4">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل دهم</span>
+                        <span class="page-count">۵ صفحه (ص ۶۲–۶۵)</span>
+                    </div>
+                    <h3 class="chapter-title">کاوش گراف‌های شبکه‌های اجتماعی (Social Networks)</h3>
+                    <p class="chapter-subtitle">Chapter 10: Mining Social-Network Graphs</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">تشخیص جوامع (Community)</span>
+                        <span class="topic-tag">الگوریتم Girvan-Newman</span>
+                        <span class="topic-tag">معیار پیمانه‌ای (Modularity)</span>
+                        <span class="topic-tag">خوشه‌بندی طیفی (Laplacian)</span>
+                        <span class="topic-tag">بردار فیدلر</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter10_Social_Network_Graphs.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter10_Social_Network_Graphs.pdf" data-title="فصل دهم: کاوش گراف‌های شبکه‌های اجتماعی">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 11 -->
+            <div class="chapter-card" data-part="part4">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل یازدهم</span>
+                        <span class="page-count">۶ صفحه (ص ۶۶–۷۰)</span>
+                    </div>
+                    <h3 class="chapter-title">روش‌های کاهش بعد (Dimensionality Reduction)</h3>
+                    <p class="chapter-subtitle">Chapter 11: Dimensionality Reduction (SVD, PCA & CUR)</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">تجزیه مقادیر منفرد (SVD)</span>
+                        <span class="topic-tag">قضیه Eckart-Young-Mirsky</span>
+                        <span class="topic-tag">تحلیل مؤلفه‌های اصلی (PCA)</span>
+                        <span class="topic-tag">تجزیه CUR</span>
+                        <span class="topic-tag">لم جانسون-لیندن‌اشتراوس</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter11_Dimensionality_Reduction.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter11_Dimensionality_Reduction.pdf" data-title="فصل یازدهم: روش‌های کاهش بعد">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 12 -->
+            <div class="chapter-card" data-part="part5">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل دوازدهم</span>
+                        <span class="page-count">۵ صفحه (ص ۷۲–۷۵)</span>
+                    </div>
+                    <h3 class="chapter-title">یادگیری ماشین در مقیاس بزرگ (Large-Scale Machine Learning)</h3>
+                    <p class="chapter-subtitle">Chapter 12: Large-Scale Machine Learning (SVM & SGD)</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">روش k-NN با ایندکس LSH</span>
+                        <span class="topic-tag">الگوریتم پرسپترون</span>
+                        <span class="topic-tag">ماشین‌های بردار پشتیبان (SVM)</span>
+                        <span class="topic-tag">تابع هزینه لولا (Hinge Loss)</span>
+                        <span class="topic-tag">الگوریتم Pegasos SGD</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter12_LargeScale_MachineLearning.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter12_LargeScale_MachineLearning.pdf" data-title="فصل دوازدهم: یادگیری ماشین در مقیاس بزرگ">پیش‌نمایش</button>
+                </div>
+            </div>
+
+            <!-- Chapter 13 -->
+            <div class="chapter-card" data-part="part5">
+                <div>
+                    <div class="card-header">
+                        <span class="chapter-badge">فصل سیزدهم</span>
+                        <span class="page-count">۶ صفحه (ص ۷۶–۸۰)</span>
+                    </div>
+                    <h3 class="chapter-title">شبکه‌های عصبی و یادگیری عمیق (Deep Learning)</h3>
+                    <p class="chapter-subtitle">Chapter 13: Neural Networks & Deep Learning</p>
+                    <div class="topic-tags">
+                        <span class="topic-tag">پرسپترون چندلایه (MLP)</span>
+                        <span class="topic-tag">پس‌انتشار خطا (Backpropagation)</span>
+                        <span class="topic-tag">شبکه‌های پیچشی (CNN)</span>
+                        <span class="topic-tag">مکانیزم توجه (Attention) و ترنسفورمر</span>
+                        <span class="topic-tag">آموزش توزیع‌شده با Ring-AllReduce</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="pdfs/Chapter13_NeuralNetworks_DeepLearning.pdf" download class="btn-download">دانلود PDF</a>
+                    <button class="btn-preview" data-pdf="pdfs/Chapter13_NeuralNetworks_DeepLearning.pdf" data-title="فصل سیزدهم: شبکه‌های عصبی و یادگیری عمیق">پیش‌نمایش</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Citation Section -->
+        <section class="citation-section">
+            <div class="citation-header">
+                <h3 class="citation-title">نحوه ارجاع علمی (BibTeX Citation)</h3>
+                <button id="copy-bibtex-btn" class="icon-btn">📋 کپی BibTeX</button>
+            </div>
+            <pre class="code-box"><code id="bibtex-code">@book{shahbazi2026bigdata,
+  author    = {احسان شهبازی (Ehsan Shahbazi)},
+  title     = {مبانی و الگوریتم‌های کلان‌داده (Mining of Massive Datasets: Comprehensive Persian Notes)},
+  year      = {2026},
+  publisher = {مجموعه یادداشت‌های آموزشی کارشناسی ارشد مهندسی کامپیوتر و علم داده},
+  url       = {https://github.com/EhsanShahbazii}
+}</code></pre>
+        </section>
+    </main>
+
+    <!-- Modal for PDF Preview -->
+    <div id="pdf-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <span id="modal-title" class="modal-title">پیش‌نمایش سند</span>
+                <button id="modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="modal-iframe" src="" title="PDF Preview"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div>
+                <strong>مبانی و الگوریتم‌های کلان‌داده</strong> — گردآورنده: 
+                <a href="https://github.com/EhsanShahbazii" target="_blank" rel="noopener noreferrer" style="color:var(--primary-500); text-decoration:none; font-weight:700;">احسان شهبازی</a>
+                (Ehsan Shahbazi)
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/EhsanShahbazii" target="_blank" rel="noopener noreferrer">پروفایل گیت‌هاب</a>
+                <span>•</span>
+                <a href="mailto:ehsan.shahbazipc@gmail.com">تماس از طریق ایمیل</a>
+                <span>•</span>
+                <a href="index_en.html">English Version</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+\documentclass[11pt,a4paper,oneside]{book}
+
+% Load custom configuration and styling
+\input{preamble.tex}
+
+\title{%
+    \Huge\textbf{مبانی و الگوریتم‌های کلان‌داده}\\[0.5em]
+    \LARGE جزوه جامع درسی و مرجع دانشگاهی تحلیل کلان‌داده\\[0.3em]
+    \large بر اساس سرفصل‌ها و اسلایدهای کتاب Mining of Massive Datasets (MMDS)\\[0.2em]
+    \normalsize تألیف: ژوره لسکُوِک، آناند راجارامان، جفری اولمن
+}
+
+\author{\textbf{گردآورنده: احسان شهبازی}\\[0.3em]\large مجموعه یادداشت‌های آموزشی کارشناسی ارشد}
+\date{\today}
+
+\begin{document}
+
+% Title Page
+\maketitle
+
+% Front matter
+\frontmatter
+
+% Preface
+\input{chapters/chapter00-preface.tex}
+
+% Table of Contents
+\tableofcontents
+\newpage
+
+% Main matter
+\mainmatter
+
+\part{مبانی کلان‌داده و رایانش توزیع‌شده}
+\input{chapters/chapter01-data-mining.tex}
+\input{chapters/chapter02-mapreduce.tex}
+\input{chapters/chapter03-similar-items.tex}
+
+\part{کاوش جریان‌های داده و وب}
+\input{chapters/chapter04-data-streams.tex}
+\input{chapters/chapter05-link-analysis.tex}
+\input{chapters/chapter06-frequent-itemsets.tex}
+
+\part{خوشه‌بندی و سامانه‌های وب}
+\input{chapters/chapter07-clustering.tex}
+\input{chapters/chapter08-advertising.tex}
+\input{chapters/chapter09-recommender-systems.tex}
+
+\part{تحلیل شبکه‌های اجتماعی و کاهش بعد}
+\input{chapters/chapter10-social-networks.tex}
+\input{chapters/chapter11-dimensionality-reduction.tex}
+
+\part{یادگیری در مقیاس بزرگ و یادگیری عمیق}
+\input{chapters/chapter12-large-scale-ml.tex}
+\input{chapters/chapter13-neural-networks.tex}
+
+% Back matter
+\backmatter
+
+\bibliographystyle{plain}
+\bibliography{references/references}
+
+\end{document}

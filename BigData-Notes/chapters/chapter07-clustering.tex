@@ -1,0 +1,209 @@
+\chapter{خوشه‌بندی در فضاهای با بعد بالا \texorpdfstring{\enparen{High-Dimensional Clustering}}{(High-Dimensional Clustering)}}
+\label{ch:clustering}
+
+\section{مقدمه و چالش‌های خوشه‌بندی کلان‌داده}
+\textbf{خوشه‌بندی}\footnote{\lr{Clustering}} فرآیند افراز مجموعه‌ای از اشیاء یا نقاط داده به گروه‌هایی (خوشه‌ها) است، به‌گونه‌ای که شباهت میان اعضای درون یک خوشه حداکثر، و شباهت میان اعضای خوشه‌های متمایز حداقل باشد.
+
+در مبحث کلان‌داده، خوشه‌بندی با دو چالش بنیادین مواجه است:
+\begin{enumerate}
+    \item \textbf{نفرین ابعاد \enparen{Curse of Dimensionality}}: با افزایش تعداد ابعاد (مثلاً در فضاهای ۱۰۰۰ بعدی متنی یا ویژگی‌های تصویری):
+    \begin{itemize}
+        \item تقریباً تمامی جفت‌نقاط دارای فواصل اقلیدسی تقریباً برابری از یکدیگر می‌شوند.
+        \item حجم فضا به صورت نمایی رشد کرده و داده‌ها به شدت تنک می‌شوند؛ به گونه‌ای که تقریباً تمامی نقاط بر روی پوسته یا مرز فضا قرار می‌گیرند.
+        \item تعاریف سنتی فاصله، کارایی تفکیک‌کنندگی خود را از دست می‌دهند.
+    \end{itemize}
+    \item \textbf{محدودیت حافظه اصلی \enparen{RAM Bottleneck}}: مجموعه‌داده‌ها شامل میلیون‌ها یا میلیاردها نقطه هستند و امکان بارگذاری تمامی نقاط در حافظه برای اجرای الگوریتم‌های تکراری وجود ندارد. داده‌ها باید روی دیسک قرار داشته باشند و الگوریتم تنها با یک یا دو گذر از روی دیسک، خوشه‌ها را شناسایی کند.
+\end{enumerate}
+
+روش‌های خوشه‌بندی عموماً به دو دسته کلی تقسیم می‌شوند:
+\begin{itemize}
+    \item \textbf{روش‌های سلسله‌مراتبی}\footnote{\lr{Hierarchical Clustering}}: ساخت درختی از خوشه‌ها به صورت پایین به بالا یا بالا به پایین.
+    \item \textbf{روش‌های تخصیص نقطه}\footnote{\lr{Point Assignment}}: انتساب هر نقطه به مناسب‌ترین خوشه بر اساس توابع هدف و مراکز خوشه‌ها (نظیر K-Means).
+\end{itemize}
+
+\section{خوشه‌بندی سلسله‌مراتبی تراکمی \texorpdfstring{\enparen{Agglomerative}}{(Agglomerative)}}
+در این روش، ابتدا هر نقطه داده به عنوان یک خوشه تک‌عضوی در نظر گرفته می‌شود. سپس در هر مرحله، دو خوشه‌ای که کمترین فاصله را دارند با یکدیگر ادغام می‌شوند تا در نهایت تمامی نقاط در یک خوشه واحد تجمیع گردند (یا تعداد خوشه‌ها به $k$ برسد).
+
+\subsection{معیارهای فاصله میان دو خوشه}
+تعریف فاصله میان دو خوشه $C_1$ و $C_2$ تعیین‌کننده شکل نهایی خوشه‌ها است:
+\begin{itemize}
+    \item \textbf{پیوند یگانه \enparen{Single Linkage}}: کمترین فاصله میان اعضا:
+    \begin{equation}
+    d(C_1, C_2) = \min_{x \in C_1, y \in C_2} d(x, y)
+    \end{equation}
+    تمایل به تولید خوشه‌های کشیده و زنجیره‌ای دارد.
+    
+    \item \textbf{پیوند کامل \enparen{Complete Linkage}}: بیشترین فاصله میان اعضا:
+    \begin{equation}
+    d(C_1, C_2) = \max_{x \in C_1, y \in C_2} d(x, y)
+    \end{equation}
+    تمایل به تولید خوشه‌های فشرده و کروی دارد.
+    
+    \item \textbf{فاصله مراکز \enparen{Centroid Distance}}: فاصله میان میانگین‌های دو خوشه $d(\mu_1, \mu_2)$.
+\end{itemize}
+
+\section{الگوریتم K-Means و نسخه بهینه K-Means++}
+الگوریتم K-Means یکی از پرکاربردترین روش‌های تخصیص نقطه در فضای اقلیدسی است:
+
+\begin{algorithmbox}[الگوریتم استاندارد K-Means]
+\begin{itemize}
+    \item \textbf{ورودی}: مجموعه‌نقاط $X$ و تعداد خوشه‌ها $k$.
+    \item \textbf{گام ۱ (مقداردهی اولیه)}: $k$ نقطه به عنوان مراکز اولیه خوشه‌ها $(c_1, \dots, c_k)$ انتخاب می‌شوند.
+    \item \textbf{گام ۲ (تخصیص نقاط)}: هر نقطه $x \in X$ به نزدیک‌ترین مرکز خوشه تخصیص می‌یابد:
+    \begin{equation}
+    \text{Cluster}(x) = \arg\min_{j \in \{1, \dots, k\}} \|x - c_j\|^2
+    \end{equation}
+    \item \textbf{گام ۳ (به‌روزرسانی مراکز)}: مرکز هر خوشه برابر با میانگین هندسی تمامی نقاط تخصیص‌یافته به آن بازتعریف می‌شود:
+    \begin{equation}
+    c_j = \frac{1}{|C_j|} \sum_{x \in C_j} x
+    \end{equation}
+    \item \textbf{تکرار}: گام‌های ۲ و ۳ تا زمان تثبیت مراکز یا کمترین تغییر در تابع هزینه تکرار می‌شوند.
+\end{itemize}
+\end{algorithmbox}
+
+\subsection{الگوریتم K-Means++ برای مقداردهی اولیه هوشمند}
+انتخاب تصادفی ساده مراکز اولیه در K-Means سنتی ممکن است منجر به گیر افتادن در کمینه‌های محلی بسیار ضعیف شود. الگوریتم K-Means++ مراکز را با توزیع احتمال هوشمندانه برمی‌گزیند:
+\begin{enumerate}
+    \item اولین مرکز $c_1$ به صورت کاملاً تصادفی و یکنواخت از میان نقاط داده انتخاب می‌شود.
+    \item برای هر نقطه داده $x$، کوتاه‌ترین فاصله آن تا نزدیک‌ترین مرکز انتخاب‌شده قبلی، یعنی $D(x)$، محاسبه می‌شود.
+    \item مرکز بعدی با احتمالی متناسب با \textbf{مربع فاصله} انتخاب می‌گردد:
+    \begin{equation}
+    P(x) = \frac{D(x)^2}{\sum_{y \in X} D(y)^2}
+    \end{equation}
+    \item گام‌های ۲ و ۳ تکرار می‌شوند تا هر $k$ مرکز اولیه انتخاب گردند.
+\end{enumerate}
+این الگوریتم تضمین اثبات‌شده ریاضی ارائه می‌دهد که امید هزینه خوشه نهایی هرگز از $O(\log k)$ برابر بهینه جهانی تجاوز نمی‌کند.
+
+\section{خوشه‌بندی کلان‌داده در فضای اقلیدسی: الگوریتم BFR}
+الگوریتم \textbf{BFR}\footnote{\lr{Bradley-Fayyad-Reina Algorithm}}~\cite{bradley1998scaling} نسخه بهینه‌سازی‌شده K-Means برای کلان‌داده‌هایی است که بسیار فراتر از گنجایش حافظه اصلی هستند.
+
+\subsection{فرضیات بنیادین BFR}
+\begin{enumerate}
+    \item داده‌ها در فضای اقلیدسی تعریف شده‌اند.
+    \item خوشه‌ها پیرو \textbf{توزیع نرمال چندمتغیره} حول مرکز هستند و ابعاد داده نسبت به یکدیگر استقلال دارند (ماتریس کوواریانس قطری).
+\end{enumerate}
+
+\subsection{خلاصه‌سازی داده‌ها با آماره‌های سه‌گانه \texorpdfstring{$(N, SUM, SUMSQ)$}{(N, SUM, SUMSQ)}}
+برای اینکه نیاز به ذخیره تمامی نقاط در حافظه نباشد، هر خوشه توسط سه بردار خلاصه آماری توصیف می‌شود:
+\begin{align}
+N &: \text{تعداد نقاط موجود در خوشه} \\
+SUM_i &= \sum_{j=1}^N x_{ji} \quad (\text{مجموع مختصات در بعد } i) \\
+SUMSQ_i &= \sum_{j=1}^N x_{ji}^2 \quad (\text{مجموع مربع مختصات در بعد } i)
+\end{align}
+از روی این سه آماره، مرکز خوشه $c$ و انحراف معیار $\sigma$ در هر بعد $i$ بلافاصله قابل استخراج است:
+\begin{equation}
+c_i = \frac{SUM_i}{N} \quad , \quad \sigma_i = \sqrt{\frac{SUMSQ_i}{N} - c_i^2}
+\end{equation}
+
+\subsection{سه مجموعه داده در حافظه اصلی}
+الگوریتم BFR نقاط بارگذاری‌شده در حافظه را به سه دسته افراز می‌کند:
+\begin{itemize}
+    \item \textbf{مجموعه دفع‌شده \enparen{Discard Set - DS}}: نقاطی که به اندازه کافی به یکی از $k$ مرکز اصلی نزدیک هستند. این نقاط به آماره‌های $(N, SUM, SUMSQ)$ آن خوشه افزوده شده و خود نقطه بلافاصله از حافظه پاک می‌شود.
+    \item \textbf{مجموعه فشرده \enparen{Compressed Set - CS}}: ریزخوشه‌هایی از نقاط که به هیچ‌یک از $k$ خوشه اصلی نزدیک نیستند، اما به یکدیگر نزدیک‌اند. این ریزخوشه‌ها نیز با آماره‌های سه‌گانه خلاصه می‌شوند.
+    \item \textbf{مجموعه نگه‌داشته‌شده \enparen{Retained Set - RS}}: نقاط پرت و ایزوله‌ای که نه به خوشه‌های اصلی نزدیک‌اند و نه ریزخوشه‌ای تشکیل می‌دهند. این نقاط به صورت تکی در حافظه باقی می‌مانند تا شاید با ورود داده‌های جدید به خوشه‌ای ملحق شوند.
+\end{itemize}
+
+\subsection{معیار فاصله ماهالانوبیس \texorpdfstring{\enparen{Mahalanobis Distance}}{(Mahalanobis Distance)}}
+برای تصمیم‌گیری درباره انتساب یک نقطه $x$ به یک خوشه با مرکز $c$ و انحراف معیارهای $\sigma_i$، از \textbf{فاصله ماهالانوبیس}\footnote{\lr{Mahalanobis Distance}} استفاده می‌شود که واریانس هر بعد را لحاظ می‌کند:
+\begin{equation}
+d_{\text{Maha}}(x, c) = \sqrt{\sum_{i=1}^d \left( \frac{x_i - c_i}{\sigma_i} \right)^2}
+\end{equation}
+اگر فاصله ماهالانوبیس نقطه از مرکز کمتر از آستانه‌ای مشخص (معمولاً بین ۳ تا ۴ برابر انحراف معیار) باشد، نقطه به مجموعه DS تخصیص می‌یابد.
+
+\section{خوشه‌بندی اشکال دلخواه و غیرکروی: الگوریتم CURE}
+الگوریتم‌های K-Means و BFR فرض می‌کنند خوشه‌ها کروی یا بیضوی همگرا هستند. اما در مسائل واقعی، خوشه‌ها ممکن است اشکال هلالی، تو در تو یا غیرمحدب داشته باشند (شکل \ref{fig:cure-shapes}).
+الگوریتم \textbf{CURE}\footnote{\lr{Clustering Using REpresentatives}}~\cite{guha1998cure} برای حل این چالش ابداع شده است.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={transform shape}]
+    % Crescent cluster
+    \draw[thick, fill=blue!12, draw=blue!60] 
+        (3, 0) arc (0:180:3cm) 
+        -- (-2, 0) arc (180:0:2cm) -- cycle;
+        
+    \node at (0, 2.4) {\rl{\textbf{خوشه هلالی (غیرمحدب)}}};
+    
+    % Centroid (lies outside the cluster!)
+    \coordinate (centroid) at (0, 0.8);
+    \draw[very thick, red!80!black] (-0.15, 0.65) -- (0.15, 0.95);
+    \draw[very thick, red!80!black] (-0.15, 0.95) -- (0.15, 0.65);
+    \node[below=4pt] at (centroid) {\rl{\footnotesize\textbf{مرکز ثقل (بیرون خوشه)}}};
+    
+    % Representative points (original)
+    \coordinate (p1) at (-2.5, 0.8);
+    \coordinate (p2) at (-1.5, 2.0);
+    \coordinate (p3) at (1.5, 2.0);
+    \coordinate (p4) at (2.5, 0.8);
+    
+    % Shrunk points towards centroid
+    \coordinate (s1) at (-2.0, 0.8);
+    \coordinate (s2) at (-1.2, 1.76);
+    \coordinate (s3) at (1.2, 1.76);
+    \coordinate (s4) at (2.0, 0.8);
+    
+    \foreach \pt in {p1, p2, p3, p4} {
+        \filldraw[fill=teal!80!black, draw=black] (\pt) circle (2.5pt);
+    }
+    
+    \foreach \from/\to in {p1/s1, p2/s2, p3/s3, p4/s4} {
+        \draw[dashed, -latex, thick, red!70!black] (\from) -- (\to);
+        \filldraw[fill=orange!90!black, draw=black] (\to) circle (2.5pt);
+    }
+    
+    % Legend / annotations
+    \node[right=5pt] at (3.1, 1.5) [align=right] {
+        \rl{\footnotesize\textcolor{teal!80!black}{$\bullet$ نقاط نماینده اولیه}}\\[3pt]
+        \rl{\footnotesize\textcolor{orange!90!black}{$\bullet$ نقاط منقبض‌شده به سمت مرکز ($\alpha$)}}
+    };
+\end{tikzpicture}
+\caption{نمایش نقاط نماینده و مکانیزم انقباض در الگوریتم CURE برای پوشش شکل‌های دلخواه}
+\label{fig:cure-shapes}
+\end{figure}
+
+\begin{algorithmbox}[الگوریتم CURE]
+\begin{enumerate}
+    \item \textbf{نمونه‌گیری اولیه}: نمونه‌ای تصادفی از داده‌ها که در حافظه اصلی جا می‌شود برداشته می‌شود.
+    \item \textbf{خوشه‌بندی سلسله‌مراتبی نمونه}: نمونه به کمک روش سلسله‌مراتبی خوشه‌بندی می‌شود.
+    \item \textbf{انتخاب نقاط نماینده \enparen{Representative Points}}: برای هر خوشه، به جای تعریف یک مرکز منفرد، $c$ نقطه نماینده انتخاب می‌شود (نقاطی که بیشترین فاصله را از یکدیگر در درون خوشه دارند).
+    \item \textbf{فشرده‌سازی و انقباض \enparen{Shrinkage}}: هر نقطه نماینده به اندازه ضریب $\alpha$ (معمولاً $\alpha = 0.2$) به سمت مرکز ثقل خوشه کشیده می‌شود:
+    \begin{equation}
+    p_{\text{new}} = p + \alpha (\mu - p)
+    \end{equation}
+    این انقباض اثر نقاط پرت و نویزها را به شدت خنثی می‌کند.
+    \item \textbf{گذر نهایی روی کل داده‌ها}: هر نقطه داده از روی دیسک به خوشه‌ای تخصیص داده می‌شود که \textbf{نزدیک‌ترین نقطه نماینده} به آن را در اختیار دارد.
+\end{enumerate}
+\end{algorithmbox}
+
+\section{خوشه‌بندی در فضاهای غیر اقلیدسی: مفهوم شبه‌مرکز \texorpdfstring{\enparen{Clustroid}}{(Clustroid)}}
+در بسیاری از مسائل کلان‌داده (نظیر گراف‌ها، فاصله‌های جاکارد یا فواصل کسینوسی)، مفهوم میانگین حسابی مختصات وجود ندارد زیرا نقاط بردار اقلیدسی نیستند. برای مدیریت این وضعیت:
+\begin{definition}[شبه‌مرکز \enparen{Clustroid}]
+در یک فضای غیر اقلیدسی، \textbf{شبه‌مرکز}\footnote{\lr{Clustroid}} نقطه‌ای از خود مجموعه داده است که کمترین فاصله را تا سایر نقاط خوشه دارد. بر اساس معیار بهینه‌سازی، یکی از سه تعریف زیر به کار می‌رود:
+\begin{enumerate}
+    \item نقطه‌ای که \textbf{مجموع فواصل} تا سایر نقاط خوشه را کمینه کند: $\arg\min_{c \in C} \sum_{x \in C} d(c, x)$.
+    \item نقطه‌ای که \textbf{مجموع مجذور فواصل} تا سایر نقاط را کمینه کند: $\arg\min_{c \in C} \sum_{x \in C} d^2(c, x)$.
+    \item نقطه‌ای که \textbf{بیشینه فاصله} تا سایر نقاط (شعاع خوشه) را کمینه کند: $\arg\min_{c \in C} \max_{x \in C} d(c, x)$.
+\end{enumerate}
+\end{definition}
+
+\textbf{معیارهای ارزیابی اندازه خوشه در فضای غیر اقلیدسی}:
+\begin{itemize}
+    \item \textbf{شعاع خوشه \enparen{Cluster Radius}}: بیشینه فاصله یا میانگین مربعات فاصله از شبه‌مرکز:
+    \begin{equation}
+    R(C) = \sqrt{\frac{1}{|C|} \sum_{x \in C} d^2(x, c)}
+    \end{equation}
+    \item \textbf{قطر خوشه \enparen{Cluster Diameter}}: بیشینه فاصله میان هر دو نقطه از خوشه یا جذر میانگین مربعات فواصل دوبه‌دو:
+    \begin{equation}
+    D(C) = \sqrt{\frac{1}{|C|(|C|-1)} \sum_{x \in C} \sum_{y \in C, y \ne x} d^2(x, y)}
+    \end{equation}
+\end{itemize}
+الگوریتم‌های خوشه‌بندی غیر اقلیدسی (نظیر الگوریتم \lr{GRGPF}) در هر مرحله دو خوشه‌ای را ادغام می‌کنند که پس از ادغام، کمترین شعاع یا قطر حاصل شود.
+
+\begin{summarybox}[جمع‌بندی فصل هفتم]
+\begin{itemize}
+    \item نفرین ابعاد موجب همگرایی تمامی فواصل دوبه‌دو در فضاهای ابعادی بزرگ می‌گردد.
+    \item الگوریتم K-Means++ با انتخاب احتمالاتی بر پایه مجذور فواصل، همگرایی کیفی مراکز را تضمین می‌کند.
+    \item الگوریتم BFR داده‌های بزرگ را از طریق خلاصه آماری سه‌گانه $(N, SUM, SUMSQ)$ و معیار فاصله ماهالانوبیس خوشه‌بندی می‌نماید.
+    \item الگوریتم CURE با تکیه بر چندین نقطه نماینده منقبض‌شده، امکان کشف خوشه‌های با اشکال پیچیده و غیرمحدب را فراهم می‌سازد.
+\end{itemize}
+\end{summarybox}

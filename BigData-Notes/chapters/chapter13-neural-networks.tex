@@ -1,0 +1,188 @@
+\chapter{شبکه‌های عصبی و یادگیری عمیق \texorpdfstring{\enparen{Neural Networks \& Deep Learning}}{(Neural Networks \& Deep Learning)}}
+\label{ch:neural-networks}
+
+\section{مقدمه و گذار از پرسپترون به یادگیری عمیق}
+در فصل دوازدهم، دیدیم که یک پرسپترون ساده یا ماشین بردار پشتیبان خطی، قادر به تفکیک داده‌هایی است که با یک ابرصفحه مسطح جدا شوند. با این حال، بسیاری از پدیده‌های دنیای واقعی (نظیر تابع XOR، الگوهای تصویری، پردازش زبان طبیعی و ساختارهای پیچیده شبکه) ذاتاً غیرخطی هستند.
+
+ایده \textbf{شبکه‌های عصبی مصنوعی}\footnote{\lr{Artificial Neural Networks (ANN)}} الهام‌گرفته از ساختار زیستی مغز انسان است: اگر چندین نرون ساده در قالب لایه‌های متوالی سازمان‌دهی شوند، سیستم قادر به یادگیری نگاشت‌های غیرخطی فوق‌العاده پیچیده خواهد بود.
+
+\begin{theorem}[قضیه تقریب عام \enparen{Universal Approximation Theorem}]
+یک شبکه عصبی پیش‌خور\footnote{\lr{Feedforward Neural Network}} حتی با تنها یک لایه پنهان با تعداد کافی نرون و توابع فعال‌ساز غیرخطی، قادر است هر تابع پیوسته دلخواهی را بر روی یک مجموعه فشرده با هر درجه دقت مطلوبی تقریب بزند.
+\end{theorem}
+
+اما چرا «یادگیری عمیق» با چندین لایه پنهان بر شبکه‌های کم‌عمق برتری دارد؟ شبکه‌های عمیق با سلسله‌مراتب لایه‌ای خود، \textbf{بازنمایی ویژگی‌ها}\footnote{\lr{Representation Learning}} را به صورت خودکار انجام می‌دهند: لایه‌های ابتدایی الگوهای پایه (نظیر لبه‌ها در تصویر)، لایه‌های میانی ترکیبات ساختاری (نظیر چشم و بینی)، و لایه‌های پایانی مفاهیم انتزاعی کامل (نظیر چهره یک فرد) را استخراج می‌کنند؛ امری که نیاز به مهندسی دستی ویژگی‌ها در کلان‌داده را مرتفع می‌سازد.
+
+\section{معماری پرسپترون چندلایه \texorpdfstring{\enparen{MLP}}{(MLP)}}
+یک پرسپترون چندلایه\footnote{\lr{Multilayer Perceptron (MLP)}} از سه بخش اصلی تشکیل شده است (شکل \ref{fig:mlp-arch}):
+\begin{enumerate}
+    \item \textbf{لایه ورودی \enparen{Input Layer}}: بردارهای ویژگی خام $x = [x_1, \dots, x_d]^T$ را دریافت می‌کند.
+    \item \textbf{لایه‌های پنهان \enparen{Hidden Layers}}: پردازش‌های میانی غیرخطی را انجام می‌دهند.
+    \item \textbf{لایه خروجی \enparen{Output Layer}}: پیش‌بینی نهایی (کلاس‌ها یا مقادیر پیوسته) را صادر می‌نماید.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.85, every node/.style={transform shape},
+    neuron/.style={circle, draw, fill=blue!15, minimum size=0.8cm, font=\small}
+]
+    % Input layer
+    \node[neuron, fill=green!15] (x1) at (0, 2) {$x_1$};
+    \node[neuron, fill=green!15] (x2) at (0, 0.7) {$x_2$};
+    \node at (0, -0.3) {$\vdots$};
+    \node[neuron, fill=green!15] (xd) at (0, -1.3) {$x_d$};
+    \node[above, font=\footnotesize] at (0, 2.5) {\rl{لایه ورودی}};
+    
+    % Hidden layer
+    \node[neuron] (h1) at (3.5, 2.5) {$h_1$};
+    \node[neuron] (h2) at (3.5, 1.2) {$h_2$};
+    \node[neuron] (h3) at (3.5, -0.1) {$h_3$};
+    \node at (3.5, -1) {$\vdots$};
+    \node[neuron] (hm) at (3.5, -2) {$h_m$};
+    \node[above, font=\footnotesize] at (3.5, 3) {\rl{لایه پنهان}};
+    
+    % Output layer
+    \node[neuron, fill=orange!15] (y1) at (7, 1.3) {$\hat{y}_1$};
+    \node[neuron, fill=orange!15] (yk) at (7, -0.3) {$\hat{y}_k$};
+    \node at (7, 0.5) {$\vdots$};
+    \node[above, font=\footnotesize] at (7, 1.8) {\rl{لایه خروجی}};
+    
+    % Connections
+    \foreach \i in {x1, x2, xd}
+        \foreach \j in {h1, h2, h3, hm}
+            \draw[-{Latex[length=1.5mm]}, gray!60] (\i) -- (\j);
+            
+    \foreach \i in {h1, h2, h3, hm}
+        \foreach \j in {y1, yk}
+            \draw[-{Latex[length=1.5mm]}, gray!60] (\i) -- (\j);
+\end{tikzpicture}
+\caption{معماری استاندارد پرسپترون چندلایه \enparen{Feedforward Multilayer Perceptron}}
+\label{fig:mlp-arch}
+\end{figure}
+
+\subsection{انتشار رو به جلو \texorpdfstring{\enparen{Forward Propagation}}{(Forward Propagation)}}
+در لایه $l$، خروجی‌های لایه قبلی $(a^{(l-1)})$ در ماتریس وزن‌ها $W^{(l)}$ ضرب شده و با بردار بایاس $b^{(l)}$ جمع می‌گردند؛ سپس تابع فعال‌ساز $g(\cdot)$ اعمال می‌شود:
+\begin{align}
+z^{(l)} &= W^{(l)} a^{(l-1)} + b^{(l)} \\
+a^{(l)} &= g(z^{(l)})
+\end{align}
+که در آن $a^{(0)} = x$ بردار ورودی اولیه است.
+
+\section{توابع فعال‌ساز \texorpdfstring{\enparen{Activation Functions}}{(Activation Functions)}}
+تابع فعال‌ساز غیرخطی عنصری حیاتی در شبکه عصبی است؛ اگر تابع فعال‌ساز خطی باشد $(g(z) = z)$، ترکیب صدها لایه پنهان نیز چیزی جز یک تبدیل خطی ساده نخواهد بود!
+
+\begin{enumerate}
+    \item \textbf{تابع سیگموئید \enparen{Sigmoid}}:
+    \begin{equation}
+    \sigma(z) = \frac{1}{1 + e^{-z}} \quad , \quad \sigma'(z) = \sigma(z)(1 - \sigma(z))
+    \end{equation}
+    خروجی را به بازه $(0, 1)$ می‌برد که برای احتمالات دودویی عالی است؛ اما برای شبکه‌های عمیق دچار \textbf{محوشدگی گرادیان}\footnote{\lr{Vanishing Gradient}} می‌شود زیرا مشتق آن برای مقادیر بزرگ یا کوچک نزدیک به صفر است.
+    
+    \item \textbf{تانژانت هذلولوی \enparen{Tanh}}:
+    \begin{equation}
+    \tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}
+    \end{equation}
+    خروجی متقارن حول صفر در بازه $(-1, +1)$ تولید می‌کند و معمولاً همگرایی سریع‌تری نسبت به سیگموئید دارد.
+    
+    \item \textbf{یک‌سوساز خطی \enparen{ReLU - Rectified Linear Unit}}:
+    \begin{equation}
+    \text{ReLU}(z) = \max(0, z)
+    \end{equation}
+    \textbf{انقلاب یادگیری عمیق}: تابع ReLU به دلایل زیر به استاندارد طلایی لایه‌های پنهان تبدیل شده است:
+    \begin{itemize}
+        \item مشتق آن برای مقادیر مثبت دقیقاً برابر با ۱ است؛ بنابراین هرگز دچار محوشدگی گرادیان در جهت مثبت نمی‌شود.
+        \item محاسبه آن فوق‌العاده سریع و نیازمند یک مقایسه ساده است.
+        \item منجر به تنک شدن خودکار فعال‌سازی نرون‌ها \enparen{Sparsity} می‌گردد.
+    \end{itemize}
+    
+    \item \textbf{تابع Softmax برای طبقه‌بندی چندکلاسه}:
+    در لایه خروجی برای پیش‌بینی احتمال کلاس $k$ از میان $C$ کلاس مختلف:
+    \begin{equation}
+    P(y = k \mid x) = \frac{e^{z_k}}{\sum_{j=1}^C e^{z_j}}
+    \end{equation}
+\end{enumerate}
+
+\section{الگوریتم پس‌انتشار خطا \texorpdfstring{\enparen{Backpropagation}}{(Backpropagation)}}
+هدف از آموزش شبکه، کمینه‌سازی تابع هزینه خطا (نظیر انتروپی متقاطع\footnote{\lr{Cross-Entropy Loss}}) نسبت به تمامی وزن‌ها و بایاس‌هاست:
+\begin{equation}
+\mathcal{L} = -\sum_{k} y_k \log \hat{y}_k
+\end{equation}
+
+الگوریتم \textbf{پس‌انتشار خطا}\footnote{\lr{Backpropagation}} با استفاده از قاعده زنجیره‌ای دیفرانسیل\footnote{\lr{Chain Rule}}، سیگنال خطا را از لایه خروجی به لایه‌های قبلی منتشر می‌کند:
+
+\begin{algorithmbox}[الگوریتم پس‌انتشار خطا]
+\begin{enumerate}
+    \item \textbf{گذر رو به جلو}: محاسبه فعال‌سازی تمامی لایه‌ها تا خروجی نهایی.
+    \item \textbf{محاسبه خطای لایه خروجی $(L)$}:
+    \begin{equation}
+    \delta^{(L)} = \nabla_{a} \mathcal{L} \odot g'(z^{(L)}) = \hat{y} - y
+    \end{equation}
+    (برای انتروپی متقاطع و سافت‌مکس، تفاضل پیش‌بینی و برچسب واقعی است).
+    
+    \item \textbf{پس‌انتشار خطا به لایه‌های پنهان $(l = L-1, \dots, 1)$}:
+    \begin{equation}
+    \delta^{(l)} = \Big( (W^{(l+1)})^T \delta^{(l+1)} \Big) \odot g'(z^{(l)})
+    \end{equation}
+    که در آن $\odot$ بیانگر ضرب درایه‌به‌درایه \enparen{Hadamard product} است.
+    
+    \item \textbf{محاسبه گرادیان پارامترها}:
+    \begin{equation}
+    \frac{\partial \mathcal{L}}{\partial W^{(l)}} = \delta^{(l)} (a^{(l-1)})^T \quad , \quad \frac{\partial \mathcal{L}}{\partial b^{(l)}} = \delta^{(l)}
+    \end{equation}
+    
+    \item \textbf{به‌روزرسانی وزن‌ها}: با الگوریتم‌های SGD، ممانعت یا Adam:
+    \begin{equation}
+    W^{(l)} \leftarrow W^{(l)} - \eta \frac{\partial \mathcal{L}}{\partial W^{(l)}}
+    \end{equation}
+\end{enumerate}
+\end{algorithmbox}
+
+\section{شبکه‌های عصبی پیچشی \texorpdfstring{\enparen{CNN}}{(CNN)} برای داده‌های مکانی}
+هنگامی که ورودی تصویر است (مثلاً تصویر $1000 \times 1000$ پیکسلی)، استفاده از لایه‌های تمام‌متصل نیازمند میلیون‌ها وزن به ازای هر نرون است که باعث انفجار حافظه و بیش‌برازش شدید می‌شود.
+\textbf{شبکه‌های پیچشی}\footnote{\lr{Convolutional Neural Networks (CNN)}} با دو نوآوری بنیادین این مشکل را حل می‌کنند:
+\begin{enumerate}
+    \item \textbf{میدان‌های پذیرش محلی \enparen{Local Receptive Fields}}: هر نرون تنها به پنجره کوچکی از پیکسل‌های مجاور (مثلاً فیلتر $3 \times 3$ یا $5 \times 5$) متصل است.
+    \item \textbf{اشتراک‌گذاری وزن‌ها \enparen{Weight Sharing}}: فیلتر بر روی کل تصویر لغزانده می‌شود و وزن‌های آن برای تمامی موقعیت‌ها یکسان است. این کار تعداد پارامترهای آموزش‌پذیر را از میلیاردها به چند صد پارامتر کاهش داده و \textbf{ناوردایی نسبت به انتقال}\footnote{\lr{Translation Invariance}} ایجاد می‌کند.
+    \item \textbf{لایه‌های ادغام \enparen{Pooling}}: لایه‌هایی نظیر Max Pooling با انتخاب بیشینه مقدار در پنجره‌های $2 \times 2$، ابعاد فضایی نقشه ویژگی‌ها را کاهش داده و محاسبات را تسریع می‌بخشند.
+\end{enumerate}
+
+\section{شبکه‌های بازگشتی \texorpdfstring{\enparen{RNN}}{(RNN)} و ترنسفورمرها برای داده‌های متوالی و متنی}
+برای داده‌های دنباله‌ای با طول متغیر (مانند متون، جریان لاگ‌ها یا قیمت‌های سهام):
+\begin{itemize}
+    \item \textbf{شبکه‌های بازگشتی \enparen{RNN}}: دارای حالت پنهان $h_t$ هستند که به عنوان حافظه عمل کرده و اطلاعات مراحل زمانی گذشته را به گام جاری منتقل می‌کند:
+    \begin{equation}
+    h_t = \tanh(W x_t + U h_{t-1} + b)
+    \end{equation}
+    برای حل مشکل فراموشی در دنباله‌های طولانی، معماری‌های حافظه کوتاه‌مدت ماندگار\footnote{\lr{Long Short-Term Memory (LSTM)}} و GRU با سازوکارهای دروازه‌ای \enparen{Gates} توسعه یافتند.
+    \item \textbf{معماری ترنسفورمر و سازوکار توجه \enparen{Self-Attention}}: در سال‌های اخیر، ترنسفورمرها با پردازش کاملاً موازی (بدون وابستگی زمانی گام‌به‌گام) و محاسبه وزن‌های توجه میان تمامی جفت‌کلمات، استانداردهای مدل‌های زبانی عظیم \enparen{LLMs} و تحلیل کلان‌داده‌های متنی را دگرگون ساخته‌اند.
+    
+    در سازوکار \textbf{توجه ضرب داخلی مقیاس‌شده}\footnote{\lr{Scaled Dot-Product Attention}}، از سه ماتریس پرس‌وجو $(Q)$، کلید $(K)$ و مقدار $(V)$ استفاده می‌شود:
+    \begin{equation}
+    \text{Attention}(Q, K, V) = \text{Softmax}\left( \frac{Q K^T}{\sqrt{d_k}} \right) V
+    \end{equation}
+    ضریب مقیاس‌بندی $\frac{1}{\sqrt{d_k}}$ نقشی حیاتی دارد: در ابعاد بالا، حاصل‌ضرب داخلی بردارها رشد نمایی پیدا کرده و خروجی تابع \lr{Softmax} را به نواحی با گرادیان بی‌نهایت کوچک (محوشدگی گرادیان) می‌راند؛ این ضریب واریانس را تثبیت می‌کند.
+    
+    همچنین در \textbf{توجه چندسر}\footnote{\lr{Multi-Head Attention}}، نمایش‌های مستقل چندگانه به صورت هم‌زمان آموخته می‌شوند:
+    \begin{equation}
+    \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \dots, \text{head}_h) W^O
+    \end{equation}
+    که در آن $\text{head}_i = \text{Attention}(Q W_i^Q, K W_i^K, V W_i^V)$ است.
+\end{itemize}
+
+\section{زیرساخت‌های توزیع‌شده برای آموزش یادگیری عمیق در مقیاس بزرگ}
+آموزش مدل‌های عمیق بر روی ترابایت‌ها داده بدون توزیع محاسبات ناممکن است:
+\begin{itemize}
+    \item \textbf{موازی‌سازی داده \enparen{Data Parallelism}}: یک نسخه از کل مدل روی چندین شتاب‌دهنده گرافیکی \enparen{GPU} بارگذاری می‌شود. هر GPU یک بخش از دسته داده \enparen{Mini-batch} را پردازش کرده و گرادیان‌ها با پروتکل پرسرعت Ring-AllReduce با یکدیگر همگام می‌شوند.
+    \item \textbf{موازی‌سازی مدل \enparen{Model Parallelism}}: لایه‌های مختلف یک مدل غول‌پیکر میان چندین کارت گرافیکی افراز می‌گردند.
+\end{itemize}
+
+\begin{summarybox}[جمع‌بندی فصل سیزدهم]
+\begin{itemize}
+    \item شبکه‌های عصبی عمیق با یادگیری سلسله‌مراتبی ویژگی‌ها، تفکیک غیرخطی داده‌های کلان را میسر می‌سازند.
+    \item تابع فعال‌ساز ReLU با ممانعت از محوشدگی گرادیان، ستون فقرات یادگیری عمیق است.
+    \item الگوریتم پس‌انتشار خطا گرادیان‌های تحلیلی را با قاعده زنجیره‌ای برای به‌روزرسانی وزن‌ها محاسبه می‌کند.
+    \item شبکه‌های CNN با اشتراک وزن‌ها، داده‌های تصویری و مکانی را به صورت مقیاس‌پذیر پردازش می‌نمایند.
+    \item شبکه‌های RNN و ترنسفورمرها پردازش دنباله‌ها و متون عظیم را محقق می‌سازند.
+    \item موازی‌سازی داده با خوشه‌های GPU آموزش شبکه‌های عصبی عمیق بر روی کلان‌داده را عملیاتی می‌نماید.
+\end{itemize}
+\end{summarybox}
