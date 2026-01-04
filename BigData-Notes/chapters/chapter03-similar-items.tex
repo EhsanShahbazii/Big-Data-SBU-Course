@@ -1,0 +1,290 @@
+\chapter{یافتن آیتم‌های مشابه و درهم‌سازی حساس به مکان \texorpdfstring{\enparen{LSH}}{(LSH)}}
+\label{ch:similar-items}
+
+\section{مقدمه و تعریف مسئله}
+در تحلیل کلان‌داده، یکی از متداول‌ترین نیازمندی‌ها، یافتن آیتم‌هایی است که به یکدیگر «مشابه» هستند. کاربردهای این مسئله بسیار متنوع و گسترده است:
+\begin{itemize}
+    \item \textbf{تشخیص اسناد تکراری یا تقریباً یکسان}\footnote{\lr{Near-Duplicate Documents}}: شناسایی صفحات آینه‌ای در وب، سرقت ادبی در مقالات، یا اخبار بازنشر شده از یک خبرگزاری در سایت‌های مختلف.
+    \item \textbf{سامانه‌های توصیه‌گر}\footnote{\lr{Recommender Systems}}: یافتن کاربرانی که سلیقه یا تاریخچه خرید یکسانی در فروشگاه آنلاین دارند.
+    \item \textbf{جستجوی تصاویر مشابه}: بازیابی تصاویری که علیرغم تغییرات اندک در رزولوشن یا کادربندی، محتوای یکسانی دارند.
+    \item \textbf{شناسایی کلاهبرداری}\footnote{\lr{Fraud Detection}}: یافتن گزارش‌های پزشکی یا خسارت‌های بیمه‌ای با شرح یکسان.
+\end{itemize}
+
+اگر مجموعه‌ای شامل $N$ آیتم داشته باشیم، مقایسه دوبه‌دوی تمامی جفت‌ها نیازمند انجام:
+\begin{equation}
+\binom{N}{2} = \frac{N(N-1)}{2} \approx \frac{N^2}{2}
+\end{equation}
+مقایسه است. چنانچه $N = 10^6$ (یک میلیون سند) باشد، تعداد مقایسه‌ها حدود $5 \times 10^{11}$ خواهد بود. حتی اگر هر مقایسه تنها ۱ میکروثانیه زمان ببرد، اجرای آن نزدیک به ۶ روز به طول می‌انجامد؛ برای $N = 10^7$، این زمان به ۶۰۰ روز افزایش خواهد یافت!
+
+برای حل این چالش بنیادین، یک خط لوله محاسباتی سه‌مرحله‌ای طراحی شده است (شکل \ref{fig:lsh-pipeline}):
+\begin{enumerate}
+    \item \textbf{شینگلینگ \enparen{Shingling}}: تبدیل اسناد متنی به مجموعه‌هایی از توکن‌های متوالی کوتاه.
+    \item \textbf{کمینه‌سازی درهم‌سازی \enparen{Min-Hashing}}: تبدیل مجموعه‌های بسیار بزرگ به امضاهای کوتاه، به نحوی که تشابه مجموعه‌ها حفظ گردد.
+    \item \textbf{درهم‌سازی حساس به مکان \enparen{LSH}}: متمرکز ساختن بررسی‌ها تنها بر روی جفت‌های نامزدی که احتمال شباهت آن‌ها بسیار بالاست، بدون نیاز به مقایسه تمامی جفت‌ها.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.78, every node/.style={transform shape},
+    box/.style={draw, rectangle, rounded corners, fill=teal!10, align=center, minimum height=1.1cm, minimum width=2.6cm, inner sep=6pt, font=\small},
+    arrow/.style={-{Latex[length=2.5mm]}, thick}
+]
+    \node[box] (doc) at (0, 0) {\rl{اسناد خام متنی}};
+    \node[box] (shing) at (5.2, 0) {\rl{شینگل‌ها}\\\rl{(مجموعه‌ها)}};
+    \node[box] (sig) at (10.7, 0) {\rl{امضاهای Min-Hash}\\\rl{(بردارهای کوتاه)}};
+    \node[box] (cand) at (16.0, 0) {\rl{جفت‌های نامزد}\\\rl{(خروجی LSH)}};
+    
+    \draw[arrow] (doc) -- node[above=4pt, font=\footnotesize] {\lr{Shingling}} (shing);
+    \draw[arrow] (shing) -- node[above=4pt, font=\footnotesize] {\lr{Min-Hashing}} (sig);
+    \draw[arrow] (sig) -- node[above=4pt, font=\footnotesize] {\lr{LSH}} (cand);
+\end{tikzpicture}
+\caption{خط لوله استاندارد سه‌مرحله‌ای برای یافتن آیتم‌های مشابه در کلان‌داده}
+\label{fig:lsh-pipeline}
+\end{figure}
+
+\section{گام نخست: شینگلینگ اسناد}
+برای مقایسه دو سند، نمی‌توان صرفاً به برابری دقیق کلمات نگاه کرد، زیرا تغییر ترتیب چند کلمه یا افزودن یک پاراگراف کوتاه نباید مانع از کشف شباهت شود.
+
+\begin{definition}[$k$-شینگل یا $k$-گرام]
+یک \textbf{$k$-شینگل}\footnote{$k$-Shingle یا $k$-Gram} برای یک سند متنی، هر زیررشته به طول $k$ است که در درون آن سند ظاهر می‌شود. شینگل‌ها می‌توانند بر حسب کاراکتر یا واژه تعریف شوند.
+\end{definition}
+
+\begin{example}[استخراج شینگل‌ها]
+فرض کنید سند $D$ برابر با رشته «\texttt{abcdabd}» باشد و $k = 2$ کاراکتر در نظر گرفته شود. مجموعه‌شینگل‌های موجود در سند عبارت‌اند از:
+\begin{equation}
+S(D) = \{\text{ab}, \text{bc}, \text{cd}, \text{da}, \text{bd}\}
+\end{equation}
+توجه نمایید که شینگل «\texttt{ab}» دوبار ظاهر شده است، اما در قالب مجموعه، عناصر تکراری حذف می‌گردند (مگر آنکه از چندمجموعه\footnote{\lr{Bag of Shingles}} استفاده شود).
+\end{example}
+
+\subsection{انتخاب اندازه مناسب برای \texorpdfstring{$k$}{k}}
+\begin{itemize}
+    \item اگر $k$ خیلی کوچک انتخاب شود (مثلاً $k = 1$ یا $k = 2$ در زبان انگلیسی)، تقریباً تمام شینگل‌ها در تمام اسناد تکرار خواهند شد؛ در نتیجه همه اسناد به اشتباه شبیه هم ارزیابی می‌شوند.
+    \item قانون تجربی: $k$ باید آن‌قدر بزرگ باشد که احتمال حضور تصادفی یک شینگل خاص در سندی نامرتبط بسیار اندک باشد. برای اسناد معمولی متنی (ایمیل‌ها و مقالات کوتاه) معمولاً $k = 5$ واژه یا $k = 9$ کاراکتر انتخاب می‌شود.
+    \item \textbf{فشرده‌سازی شینگل‌ها}: برای صرفه‌جویی در مصرف حافظه، هر شینگل با استفاده از یک تابع درهم‌سازی مطمئن به یک عدد صحیح ۴ بایتی (۳۲ بیتی) نگاشت می‌شود؛ بدین ترتیب هر سند به مجموعه‌ای از اعداد ۴ بایتی تبدیل می‌گردد.
+\end{itemize}
+
+\section{معیار تشابه جاکارد و ماتریس مشخصه}
+
+\begin{definition}[تشابه جاکارد]
+تشابه جاکارد\footnote{\lr{Jaccard Similarity}} میان دو مجموعه $S$ و $T$ برابر است با نسبت اندازه اشتراک آن‌ها به اندازه اجتماع آن‌ها:
+\begin{equation}
+\text{SIM}(S, T) = J(S, T) = \frac{|S \cap T|}{|S \cup T|}
+\end{equation}
+فاصله جاکارد\footnote{\lr{Jaccard Distance}} نیز به صورت مکمل تشابه تعریف می‌شود:
+\begin{equation}
+d_J(S, T) = 1 - J(S, T) = \frac{|S \cup T| - |S \cap T|}{|S \cup T|}
+\end{equation}
+\end{definition}
+
+\begin{theorem}[ویژگی متریک فاصله جاکارد]
+فاصله جاکارد $d_J(S, T) = 1 - J(S, T)$ یک \textbf{متریک ریاضی معتبر} است؛ یعنی هر چهار شرط فضای متریک را ارضا می‌کند:
+\begin{enumerate}
+    \item \textbf{نامنفی بودن}: $d_J(S, T) \ge 0$ (چون $0 \le J(S, T) \le 1$).
+    \item \textbf{انطباق بر خود}: $d_J(S, T) = 0 \iff S = T$.
+    \item \textbf{تقارن}: $d_J(S, T) = d_J(T, S)$.
+    \item \textbf{نامساوی مثلثی}: برای هر سه مجموعه $S_1, S_2, S_3$:
+    \begin{equation}
+    d_J(S_1, S_3) \le d_J(S_1, S_2) + d_J(S_2, S_3)
+    \end{equation}
+\end{enumerate}
+\end{theorem}
+
+\textbf{اثبات نامساوی مثلثی با بهره‌گیری از Min-Hashing:}
+بر اساس قضیه Min-Hashing، فاصله جاکارد دقیقاً برابر است با احتمال عدم تطابق مقدار هش تصادفی دو مجموعه:
+\begin{equation}
+d_J(S, T) = \Pr[h(S) \ne h(T)]
+\end{equation}
+حال برای هر سه مجموعه $S_1, S_2, S_3$، اگر $h(S_1) \ne h(S_3)$ رخ دهد، لزوماً حداقل یکی از دو رویداد $h(S_1) \ne h(S_2)$ یا $h(S_2) \ne h(S_3)$ باید اتفاق افتاده باشد (زیرا اگر هر دو جفت برابر بودند، بنا بر اصل تعدی باید $h(S_1) = h(S_3)$ می‌شد). بنابراین طبق قاعده اجتماع احتمالات:
+\begin{equation}
+\Pr[h(S_1) \ne h(S_3)] \le \Pr[h(S_1) \ne h(S_2)] + \Pr[h(S_2) \ne h(S_3)]
+\end{equation}
+که مستقیماً نامساوی مثلثی $d_J(S_1, S_3) \le d_J(S_1, S_2) + d_J(S_2, S_3)$ را به اثبات می‌رساند.
+
+\subsection{ماتریس مشخصه \texorpdfstring{\enparen{Characteristic Matrix}}{(Characteristic Matrix)}}
+اگر تمام شینگل‌های جهان داده را به عنوان سطرهای یک ماتریس و اسناد مختلف را به عنوان ستون‌های آن در نظر بگیریم، \textbf{ماتریس مشخصه}\footnote{\lr{Characteristic Matrix}} حاصل می‌شود:
+\begin{equation}
+M_{ij} = 
+\begin{cases}
+1 & \text{اگر شینگل } i \text{ در سند } j \text{ وجود داشته باشد} \\
+0 & \text{در غیر این صورت}
+\end{cases}
+\end{equation}
+این ماتریس در عمل بی‌نهایت تنک\footnote{\lr{Sparse}} است و هرگز به طور کامل در حافظه ذخیره نمی‌شود، اما چارچوب مفهومی بسیار روشنی برای تعریف Min-Hashing فراهم می‌آورد.
+
+\section{گام دوم: کمینه‌سازی درهم‌سازی \texorpdfstring{\enparen{Min-Hashing}}{(Min-Hashing)}}
+هدف از Min-Hashing فشرده‌سازی ستون‌های بسیار طولانی ماتریس مشخصه به بردارها و امضاهای کوتاه با طول $n$ (مثلاً $n = 100$ یا $200$) است، به گونه‌ای که تشابه امضاها دقیقاً برابر با تشابه جاکارد مجموعه‌های اصلی باشد.
+
+\subsection{جایگشت سطرها و تابع Min-Hash}
+فرض کنید جایگشتی تصادفی $\pi$ بر روی سطرهای ماتریس مشخصه اعمال کنیم.
+\begin{definition}[تابع Min-Hash]
+مقدار $h_\pi(C)$ برای ستون $C$ برابر است با \textbf{شماره نخستین سطری} (در ترتیب جایگشت $\pi$) که مقدار درایه ستون $C$ در آن سطر برابر با $1$ باشد.
+\end{definition}
+
+\begin{theorem}[قضیه بنیادین Min-Hashing~\cite{broder1997resemblance}]
+احتمال اینکه مقدار Min-Hash دو ستون $C_1$ و $C_2$ با یکدیگر برابر باشد، دقیقاً معادل تشابه جاکارد آن دو ستون است:
+\begin{equation}
+\Pr[h_\pi(C_1) = h_\pi(C_2)] = \text{SIM}(C_1, C_2) = J(C_1, C_2)
+\end{equation}
+\end{theorem}
+
+\textbf{اثبات قضیه:}
+سطرهای ماتریس مشخصه نسبت به دو ستون $C_1$ و $C_2$ به سه دسته تقسیم می‌شوند:
+\begin{itemize}
+    \item \textbf{نوع $X$}: سطرهایی که در هر دو ستون مقدار $1$ دارند (تعداد: $x = |C_1 \cap C_2|$).
+    \item \textbf{نوع $Y$}: سطرهایی که در یکی از دو ستون مقدار $1$ و در دیگری $0$ دارند (تعداد: $y = |C_1 \cup C_2| - |C_1 \cap C_2|$).
+    \item \textbf{نوع $Z$}: سطرهایی که در هر دو ستون مقدار $0$ دارند.
+\end{itemize}
+هنگامی که سطرها را به صورت تصادفی جایگشت می‌دهیم و از بالا به پایین پیمایش می‌کنیم، سطرهای نوع $Z$ تاثیری در مقدار Min-Hash ندارند زیرا مقدار هر دو ستون صفر است. بنابراین، نخستین سطری که مقدار $1$ در آن دیده می‌شود، یا از نوع $X$ خواهد بود یا از نوع $Y$.
+مقدار $h_\pi(C_1) = h_\pi(C_2)$ خواهد بود اگر و تنها اگر نخستین سطر غیرصفر مشاهده‌شده از نوع $X$ باشد. احتمال این رخداد برابر است با نسبت تعداد سطرهای نوع $X$ به کل سطرهای نوع $X$ و $Y$:
+\begin{equation}
+\Pr[h_\pi(C_1) = h_\pi(C_2)] = \frac{x}{x + y} = \frac{|C_1 \cap C_2|}{|C_1 \cup C_2|} = J(C_1, C_2)
+\end{equation}
+و حکم اثبات می‌شود.
+
+\subsection{الگوریتم شبیه‌سازی Min-Hash بدون اعمال جایگشت فیزیکی}
+در کلان‌داده، جایگشت دادن فیزیکی میلیاردها سطر ناممکن است. به جای آن، از $n$ تابع درهم‌سازی مستقل به فرم $h_i(r) = (a_i r + b_i) \pmod p$ استفاده می‌شود. الگوریتم ماتریس امضا به شرح زیر عمل می‌کند:
+
+\begin{algorithmbox}[محاسبه ماتریس امضای Min-Hash]
+\begin{itemize}
+    \item \textbf{ورودی}: ماتریس مشخصه با $R$ سطر و $C$ ستون، و $n$ تابع درهم‌سازی $h_1, h_2, \dots, h_n$.
+    \item \textbf{خروجی}: ماتریس امضا $SIG$ با ابعاد $n \times C$.
+    \item \textbf{مقداردهی اولیه}: برای تمامی درایه‌های ماتریس امضا، $SIG(i, c) = \infty$ قرار دهید.
+    \item \textbf{پیمایش سطر به سطر}: به ازای هر سطر $r$ از ماتریس مشخصه:
+    \begin{enumerate}
+        \item مقادیر $h_1(r), h_2(r), \dots, h_n(r)$ را محاسبه کنید.
+        \item به ازای هر ستون $c$ که در آن سطر مقدار $1$ دارد:
+        \begin{equation}
+        SIG(i, c) = \min(SIG(i, c), h_i(r)) \quad \forall i \in \{1, \dots, n\}
+        \end{equation}
+    \end{enumerate}
+\end{itemize}
+\end{algorithmbox}
+
+\section{گام سوم: درهم‌سازی حساس به مکان \texorpdfstring{\enparen{LSH}}{(LSH)} برای امضاها}
+حتی پس از تبدیل اسناد به امضاهای کوتاه، اگر بخواهیم تمامی جفت‌امضاها را با یکدیگر مقایسه کنیم، همچنان با هزینه زمانی مرتبه $O(N^2)$ روبرو هستیم. روش \textbf{LSH}\footnote{\lr{Locality-Sensitive Hashing}} راهکاری هوشمندانه برای کاهش فضای جستجو است.
+
+\subsection{روش دسته‌بندی نواری \texorpdfstring{\enparen{Banding Technique}}{(Banding Technique)}}
+فرض کنید ماتریس امضا دارای $n$ سطر است. این ماتریس را به $b$ نوار\footnote{\lr{Band}} تقسیم می‌کنیم، به طوری که هر نوار شامل دقیقاً $r$ سطر متوالی باشد، یعنی:
+\begin{equation}
+n = b \times r
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    band/.style={draw, fill=blue!10, rectangle, minimum width=3.5cm, minimum height=0.9cm, align=center, font=\small}
+]
+    \node[band] (b1) at (0, 3) {\rl{نوار ۱ ($r$ سطر)}};
+    \node[band] (b2) at (0, 1.8) {\rl{نوار ۲ ($r$ سطر)}};
+    \node at (0, 0.8) {$\vdots$};
+    \node[band] (bb) at (0, -0.3) {\rl{نوار $b$ ($r$ سطر)}};
+    
+    \draw [decorate,decoration={brace,amplitude=6pt},xshift=-2mm] (-1.9,3.5) -- (-1.9,-0.8) node [black,midway,xshift=-1.8cm, font=\small] {\rl{ماتریس امضا ($n$ سطر)}};
+    
+    \node[draw, rounded corners, fill=orange!20, minimum height=1.5cm, minimum width=2cm, align=center] (buck) at (5, 1.5) {\rl{سطل‌های}\\\rl{درهم‌سازی}};
+    
+    \draw[-{Latex[length=2.5mm]}, thick] (1.8, 3) -- (3.9, 1.8);
+    \draw[-{Latex[length=2.5mm]}, thick] (1.8, 1.8) -- (3.9, 1.5);
+    \draw[-{Latex[length=2.5mm]}, thick] (1.8, -0.3) -- (3.9, 1.2);
+\end{tikzpicture}
+\caption{افراز ماتریس امضا به $b$ نوار از $r$ سطر و هش کردن بخش‌های ستون به سطل‌ها}
+\label{fig:lsh-banding}
+\end{figure}
+
+سازوکار الگوریتم به شرح زیر است:
+\begin{enumerate}
+    \item برای هر نوار، یک تابع درهم‌سازی مجزا در نظر می‌گیریم.
+    \item قطعه $r$-عنصری هر ستون در آن نوار را به یکی از سطل‌های متعدد درهم‌سازی نگاشت می‌کنیم.
+    \item \textbf{قاعده جفت‌های نامزد}: دو سند $C_1$ و $C_2$ به عنوان \textbf{جفت نامزد}\footnote{\lr{Candidate Pair}} اعلام می‌شوند اگر و تنها اگر \textbf{حداقل در یک نوار}، در سطل یکسانی قرار گیرند.
+    \item تنها جفت‌های نامزد مورد مقایسه کامل شباهت قرار می‌گیرند.
+\end{enumerate}
+
+\subsection{تحلیل ریاضی منحنی اس-شکل \texorpdfstring{\enparen{S-Curve Analysis}}{(S-Curve Analysis)}}
+فرض کنید تشابه واقعی جاکارد میان دو سند برابر با $s = J(C_1, C_2)$ باشد. می‌خواهیم احتمال نامزد شدن این دو سند $(f(s))$ را محاسبه نماییم:
+
+\begin{enumerate}
+    \item احتمال اینکه دو ستون در یک سطر خاص از یک نوار توافق داشته باشند: $s$.
+    \item احتمال اینکه در تمام $r$ سطر یک نوار خاص توافق داشته باشند (یعنی در آن نوار در یک سطل بیفتند):
+    \begin{equation}
+    P(\text{تطابق در نوار خاص}) = s^r
+    \end{equation}
+    \item احتمال اینکه در آن نوار خاص تطابق نداشته باشند:
+    \begin{equation}
+    1 - s^r
+    \end{equation}
+    \item احتمال اینکه در \textbf{هیچ‌یک} از $b$ نوار تطابق نداشته باشند (عدم توافق در تمام نوارها):
+    \begin{equation}
+    (1 - s^r)^b
+    \end{equation}
+    \item بنابراین، احتمال اینکه در \textbf{حداقل یک نوار} تطابق داشته باشند (شرط نامزدی):
+    \begin{equation}
+    f(s) = 1 - (1 - s^r)^b
+    \end{equation}
+\end{enumerate}
+
+نمودار تابع $f(s)$ دارای شکل $S$ است. آستانه شباهت بحرانی\footnote{\lr{Threshold}} $s^*$ که در آن شیب منحنی بیشترین مقدار است، با تقریب عالی از رابطه زیر به دست می‌آید:
+\begin{equation}
+s^* \approx \left( \frac{1}{b} \right)^{1/r}
+\end{equation}
+اگر تشابه دو سند $s > s^*$ باشد، احتمال نامزدی آنها به سرعت به ۱ نزدیک می‌شود؛ و اگر $s < s^*$ باشد، احتمال نامزدی به سرعت به ۰ میل می‌کند.
+
+\begin{example}[محاسبه احتمال خطای مثبت کاذب و منفی کاذب در LSH]
+فرض کنید $n = 100$ سطر در ماتریس امضا داریم و آن را به $b = 20$ نوار با $r = 5$ سطر تقسیم کرده‌ایم. آستانه تقریب برابر است با:
+\begin{equation}
+s^* \approx (1/20)^{1/5} \approx 0.549
+\end{equation}
+حال دو سناریو را بررسی می‌کنیم:
+\begin{itemize}
+    \item \textbf{دو سند با شباهت بالا $s = 0.8$}:
+    \begin{equation}
+    f(0.8) = 1 - (1 - 0.8^5)^{20} = 1 - (1 - 0.32768)^{20} = 1 - (0.67232)^{20} \approx 1 - 0.00035 = 0.99965
+    \end{equation}
+    یعنی با احتمال $99.965\%$ این دو سند به درستی شناسایی می‌شوند (تنها $0.035\%$ خطای منفی کاذب).
+    
+    \item \textbf{دو سند با شباهت پایین $s = 0.2$}:
+    \begin{equation}
+    f(0.2) = 1 - (1 - 0.2^5)^{20} = 1 - (1 - 0.00032)^{20} \approx 1 - (1 - 20 \times 0.00032) \approx 0.0064
+    \end{equation}
+    احتمال اینکه این دو سند نامزد شوند کمتر از $0.64\%$ است (خطای مثبت کاذب بسیار اندک).
+\end{itemize}
+\end{example}
+
+\section{معیارهای فاصله و خانواده‌های درهم‌سازی حساس به مکان}
+تشابه جاکارد تنها یکی از معیارهای فاصله است. در کلان‌داده، انواع معیارهای فاصله به کار می‌روند:
+
+\begin{definition}[اصول موضوعه یک تابع فاصله (متریک)]
+یک تابع $d(x, y)$ یک متریک معتبر است اگر و تنها اگر در چهار شرط زیر صدق کند:
+\begin{enumerate}
+    \item نامنفی بودن: $d(x, y) \ge 0$.
+    \item تفکیک‌پذیری: $d(x, y) = 0 \iff x = y$.
+    \item تقارن: $d(x, y) = d(y, x)$.
+    \item نامساوی مثلثی: $d(x, z) \le d(x, y) + d(y, z)$.
+\end{enumerate}
+\end{definition}
+
+\begin{itemize}
+    \item \textbf{فاصله اقلیدسی $(L_2)$}: $d(x, y) = \sqrt{\sum_{i} (x_i - y_i)^2}$.
+    \item \textbf{فاصله منهتن $(L_1)$}: $d(x, y) = \sum_{i} |x_i - y_i|$.
+    \item \textbf{فاصله کسینوسی}: زاویه بین دو بردار، $\theta = \arccos \left( \frac{x \cdot y}{\|x\| \|y\|} \right)$، که منجر به روش ابَربَرش‌های تصادفی\footnote{\lr{Random Hyperplanes}} یا SimHash می‌شود.
+    \item \textbf{فاصله همینگ}\footnote{\lr{Hamming Distance}}: تعداد موقعیت‌هایی که دو رشته با طول برابر در آن‌ها متفاوت‌اند.
+\end{itemize}
+
+\begin{examnote}
+در آزمون‌ها، نحوه تنظیم پارامترهای $b$ و $r$ با توجه به آستانه مورد نظر $s$ بسیار حائز اهمیت است:
+\begin{itemize}
+    \item اگر هدف کاهش \textbf{منفی کاذب}\footnote{\lr{False Negatives}} باشد (نمی‌خواهیم هیچ جفت مشابهی جا بیفتد)، $b$ را افزایش و $r$ را کاهش می‌دهیم (پایین آوردن آستانه).
+    \item اگر هدف کاهش \textbf{مثبت کاذب}\footnote{\lr{False Positives}} و کاهش زمان محاسبات باشد، $r$ را افزایش می‌دهیم تا شرط سخت‌گیرانه‌تری برای هم‌سطلی اعمال گردد.
+\end{itemize}
+\end{examnote}
+
+\begin{summarybox}[جمع‌بندی فصل سوم]
+\begin{itemize}
+    \item مقایسه دوبه‌دوی اسناد در کلان‌داده به دلیل مرتبه زمانی $O(N^2)$ غیرممکن است.
+    \item شینگلینگ اسناد را به مجموعه‌هایی مناسب برای ارزیابی تشابه جاکارد تبدیل می‌کند.
+    \item روش Min-Hashing با تکیه بر جایگشت‌های تصادفی، مجموعه‌های حجیم را به امضاهایی کوتاه فشرده می‌سازد به نحوی که $\Pr[h(C_1) = h(C_2)] = J(C_1, C_2)$.
+    \item الگوریتم LSH با تقسیم ماتریس امضا به $b$ نوار از $r$ سطر و ایجاد منحنی S-شکل، فضای جستجو را تنها به نامزدهای بسیار محتمل محدود می‌سازد.
+\end{itemize}
+\end{summarybox}

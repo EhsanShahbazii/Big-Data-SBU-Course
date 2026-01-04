@@ -1,0 +1,208 @@
+\chapter{نگاشت-کاهش و پشته نرم‌افزاری پردازش توزیع‌شده}
+\label{ch:mapreduce}
+
+\section{مقدمه: چالش‌های معماری در مقیاس وب}
+در سیستم‌های سنتی، برای پاسخ‌گویی به افزایش حجم محاسبات، راهکار ارتقای عمودی\footnote{Vertical Scaling یا Scale-Up} (افزودن پردازنده، حافظه یا دیسک‌های سریع‌تر به یک سرور واحد) به کار گرفته می‌شد. با این حال، در عصر کلان‌داده، حجم داده‌ها به ده‌ها و صدها ترابایت رسیده است؛ در نتیجه ارتقای عمودی به دلیل محدودیت‌های فیزیکی، گذرگاه حافظه و هزینه‌های نجومی توجیه‌پذیر نیست.
+
+رویکرد نوین، \textbf{ارتقای افقی}\footnote{Horizontal Scaling یا Scale-Out} است؛ یعنی اتصال هزاران رایانه معمولی و ارزان‌قیمت تجاری\footnote{\lr{Commodity Hardware}} در قالب خوشه‌های محاسباتی\footnote{\lr{Computing Clusters}}. در این معماری:
+\begin{itemize}
+    \item ماشین‌ها در قفسه‌هایی\footnote{\lr{Racks}} شامل ۳۰ تا ۴۰ گره مستقر شده و با سوئیچ‌های محلی به یکدیگر و با سوئیچ‌های شبکه اصلی به سایر قفسه‌ها متصل می‌شوند.
+    \item نرخ خرابی قطعات سخت‌افزاری (خرابی هارد دیسک، سوختن منبع تغذیه، یا قطع کابل شبکه) بسیار بالا است. اگر میانگین طول عمر یک ماشین ۳ سال (۱۰۰۰ روز) باشد، در یک خوشه با ۱۰۰۰ ماشین، \textbf{به طور متوسط هر روز حداقل یک ماشین دچار خرابی کامل می‌شود}.
+\end{itemize}
+
+بنابراین، دو اصل بنیادین در معماری نرم‌افزارهای کلان‌داده حاکم است:
+\begin{enumerate}
+    \item \textbf{تحمل خطای نرم‌افزاری}\footnote{\lr{Software-level Fault Tolerance}}: سیستم نرم‌افزاری باید به گونه‌ای طراحی شود که خرابی گره‌ها را به عنوان امری روزمره بپذیرد و بدون نیاز به آغاز مجدد کل محاسبات، وظایف گره خراب را به طور خودکار بازتولید کند.
+    \item \textbf{نزدیک‌سازی محاسبات به داده}\footnote{\lr{Moving Computation to Data}}: انتقال ترابایت‌ها داده در پهنای باند محدود شبکه خوشه غیرممکن است؛ بنابراین کد برنامه باید به گره‌هایی که قطعات داده روی دیسک آن‌ها ذخیره شده است فرستاده شود.
+\end{enumerate}
+
+\section{سیستم‌های فایل توزیع‌شده \texorpdfstring{\enparen{DFS / GFS / HDFS}}{(DFS / GFS / HDFS)}}
+سیستم‌های فایل توزیع‌شده نظیر \lr{GFS}\footnote{\lr{Google File System}} و پیاده‌سازی متن‌باز آن \lr{HDFS}\footnote{\lr{Hadoop Distributed File System}}، زیرساخت بنیادین ذخیره‌سازی داده‌های حجیم به صورت پایدار و توزیع‌شده هستند.
+
+\begin{definition}[تکه یا بلوک داده]
+در سیستم فایل توزیع‌شده، فایل‌های بسیار بزرگ به قطعات یکنواختی به نام \textbf{تکه}\footnote{Chunk یا Block} با اندازه‌ای نوعاً بین ۶۴ تا ۱۲۸ مگابایت تقسیم می‌شوند. هر تکه به طور پیش‌فرض بر روی \textbf{سه گره متمایز} (ترجیحاً در دو قفسه شبکه مختلف جهت تاب‌آوری در برابر قطع برق قفسه) تکثیر\footnote{\lr{Replication}} می‌گردد.
+\end{definition}
+
+معماری \lr{HDFS} از دو بخش اصلی تشکیل شده است:
+\begin{itemize}
+    \item \textbf{گره نام \enparen{NameNode}}: متادیتا و شاخص محل ذخیره‌سازی تکه‌ها را در حافظه اصلی خود نگه می‌دارد. جهت کارایی بالا، هیچ داده خامی از مسیر گره نام عبور نمی‌کند.
+    \item \textbf{گره‌های داده \enparen{DataNodes}}: مسئولیت ذخیره‌سازی واقعی تکه‌های فایل روی دیسک محلی و ارائه مستقیم آن‌ها به کلاینت‌ها را بر عهده دارند.
+\end{itemize}
+
+\section{مدل برنامه‌نویسی نگاشت-کاهش \texorpdfstring{\enparen{MapReduce}}{(MapReduce)}}
+مدل نگاشت-کاهش توسط جفری دین و سانجای جماوات در گوگل معرفی شد~\cite{dean2008mapreduce}. این مدل، پیچیدگی‌های موازی‌سازی، زمان‌بندی، تقسیم بار شبکه و مدیریت خرابی را از دید برنامه‌نویس پنهان ساخته و محاسبات را به دو تابع اصلی تقسیم می‌کند:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.85, every node/.style={transform shape},
+    box/.style={draw, rectangle, rounded corners, fill=blue!10, align=center, minimum height=1cm, minimum width=2.2cm, font=\small},
+    phase/.style={draw, rectangle, fill=gray!20, align=center, minimum height=0.7cm, minimum width=2.4cm, font=\bfseries}
+]
+    % Steps
+    \node[phase] (inp) at (0, 3) {\rl{داده ورودی \enparen{HDFS}}};
+    \node[box] (m1) at (0, 1.5) {\lr{Mapper 1}};
+    \node[box] (m2) at (0, 0) {\lr{Mapper 2}};
+    \node[box] (m3) at (0, -1.5) {\lr{Mapper 3}};
+    
+    \node[phase] (shuf) at (4, 0) {\lr{Shuffle \& Sort}\\\rl{\small(گروه‌بندی کلیدها)}};
+    
+    \node[box] (r1) at (8, 1) {\lr{Reducer 1}};
+    \node[box] (r2) at (8, -1) {\lr{Reducer 2}};
+    \node[phase] (out) at (11.5, 0) {\rl{خروجی نهایی \enparen{HDFS}}};
+    
+    % Arrows
+    \draw[-{Latex[length=2.5mm]}] (inp) -- (m1);
+    \draw[-{Latex[length=2.5mm]}] (inp) -- (m2);
+    \draw[-{Latex[length=2.5mm]}] (inp) -- (m3);
+    
+    \draw[-{Latex[length=2.5mm]}] (m1) -- node[above=3pt, font=\footnotesize] {$(k_2, v_2)$} (shuf);
+    \draw[-{Latex[length=2.5mm]}] (m2) -- (shuf);
+    \draw[-{Latex[length=2.5mm]}] (m3) -- (shuf);
+    
+    \draw[-{Latex[length=2.5mm]}] (shuf) -- node[above=3pt, font=\footnotesize] {$(k_2, [v_2])$} (r1);
+    \draw[-{Latex[length=2.5mm]}] (shuf) -- (r2);
+    
+    \draw[-{Latex[length=2.5mm]}] (r1) -- (out);
+    \draw[-{Latex[length=2.5mm]}] (r2) -- (out);
+\end{tikzpicture}
+\caption{جریان اجرای الگوریتم MapReduce شامل مراحل نگاشت، بُر زدن و مرتب‌سازی، و کاهش}
+\label{fig:mapreduce-flow}
+\end{figure}
+
+\begin{definition}[امضای توابع نگاشت و کاهش]
+توابع Map و Reduce به شکل زیر فرمول‌بندی می‌شوند:
+\begin{align}
+\text{Map}(k_1, v_1) &\longrightarrow \text{list}(k_2, v_2) \\
+\text{Reduce}(k_2, \text{list}(v_2)) &\longrightarrow \text{list}(v_3)
+\end{align}
+در مرحله میانی که توسط زیرساخت اجرا می‌شود و به \textbf{بُر زدن و مرتب‌سازی}\footnote{\lr{Shuffle and Sort}} مشهور است، تمامی مقادیر با کلید یکسان $k_2$ گردآوری شده و به صورت یک لیست تحویل یک کاهنده واحد می‌گردند.
+\end{definition}
+
+\begin{example}[شمارش واژگان \enparen{Word Count}]
+مسئله استاندارد برای نشان دادن کارکرد MapReduce، شمارش تکرار هر کلمه در یک مجموعه سند است:
+\begin{itemize}
+    \item \textbf{ورودی نگاشت}: کلید نام سند و مقدار متن یک سطر از سند است.
+    \item \textbf{تابع نگاشت}:
+    \begin{equation}
+    \text{Map}(\text{DocID}, \text{Text}) \implies \text{برای هر واژه } w \text{ در متن، جفت } (w, 1) \text{ منتشر شود.}
+    \end{equation}
+    \item \textbf{مرحله میانی (سیستم)}: تمام جفت‌های واژه یکسان دسته‌بندی می‌شوند:
+    \begin{equation}
+    (w, [1, 1, 1, \dots, 1])
+    \end{equation}
+    \item \textbf{تابع کاهش}: مقادیر لیست را جمع می‌زند:
+    \begin{equation}
+    \text{Reduce}(w, [v_1, v_2, \dots, v_n]) \implies \left( w, \sum_{i=1}^n v_i \right)
+    \end{equation}
+\end{itemize}
+\end{example}
+
+\section{بهینه‌سازی‌های اجرایی در نگاشت-کاهش}
+
+\subsection{تابع ترکیب‌کننده \texorpdfstring{\enparen{Combiner}}{(Combiner)}}
+در مثال شمارش واژگان، برای کلماتی مانند «در» یا «از»، یک مپر ممکن است میلیون‌ها جفت $(\text{«در»}, 1)$ تولید کند. فرستادن این حجم از داده خام روی شبکه باعث انسداد پهنای باند می‌گردد.
+\begin{definition}[ترکیب‌کننده]
+تابع \textbf{ترکیب‌کننده}\footnote{\lr{Combiner}} یک مینی-ردیوسر اختیاری است که در حافظه ماشین نگاشت، قبل از ارسال داده‌ها به شبکه اجرا می‌شود. شرط استفاده از Combiner این است که عمل کاهش دارای ویژگی \textbf{شرکت‌پذیری}\footnote{\lr{Associative}} و \textbf{جابجایی‌پذیری}\footnote{\lr{Commutative}} باشد (مانند جمع، ضرب، یا محاسبه بیشینه و کمینه؛ اما برای محاسبه میانگین نمی‌توان مستقیماً میانگین گرفت، بلکه باید مجموع و تعداد به طور مجزا فشرده شوند).
+\end{definition}
+
+\subsection{تابع افرازبندی \texorpdfstring{\enparen{Partitioner}}{(Partitioner)}}
+برای تعیین اینکه هر کلید $k_2$ به کدام کاهنده (از میان $R$ پردازه کاهنده) ارسال شود، از تابع افرازبندی استفاده می‌شود. به صورت پیش‌فرض:
+\begin{equation}
+\text{Reducer\_ID} = \text{hash}(k_2) \pmod R
+\end{equation}
+با تنظیم دستی تابع افرازبندی می‌توان توزیع کلیدها را برای جلوگیری از کجی داده\footnote{\lr{Data Skew}} کنترل کرد.
+
+\subsection{مدیریت گره‌های کند \texorpdfstring{\enparen{Stragglers}}{(Stragglers)} با اجرای گمانه‌زنانه}
+در یک اجرای توزیع‌شده با هزاران وظیفه، اگر ۹۹٪ وظایف ظرف ۵ دقیقه تمام شوند، ولی یک وظیفه روی ماشینی با هارد دیسک معیوب گیر کند، کل جاب متوقف می‌ماند. این پدیده \textbf{عقب‌ماندگی یا گره کند}\footnote{\lr{Straggler}} نام دارد.
+راهکار سیستم MapReduce اجرای کارهای پشتیبان\footnote{Backup Tasks یا Speculative Execution} در مراحل پایانی است؛ هر یک از کارهای موازی که زودتر به پایان برسد، پذیرفته شده و دیگری متوقف می‌گردد.
+
+\section{پیاده‌سازی اعمال جبر رابطه‌ای در MapReduce}
+پایگاه داده‌های رابطه‌ای بر مبنای اعمال جبر رابطه‌ای عمل می‌کنند. این اعمال در MapReduce به صورت مقیاس‌پذیر پیاده‌سازی می‌شوند:
+
+\subsection{پیوند طبیعی \texorpdfstring{\enparen{Natural Join}}{(Natural Join)}}
+فرض کنید دو رابطه $R(A, B)$ و $S(B, C)$ داریم و می‌خواهیم $R \bowtie S$ را روی ویژگی مشترک $B$ محاسبه نماییم.
+
+\begin{algorithmbox}[پیوند طبیعی در MapReduce]
+\begin{itemize}
+    \item \textbf{ورودی}: سطرهای رابطه $R$ به فرم $(a, b)$ و سطرهای رابطه $S$ به فرم $(b, c)$.
+    \item \textbf{خروجی}: تاپل‌های پیوندخورده $(a, b, c)$.
+    \item \textbf{تابع نگاشت}:
+    \begin{align}
+    \text{برای هر سطر } R(a, b) &\implies \text{خروجی: } (b, (R, a)) \\
+    \text{برای هر سطر } S(b, c) &\implies \text{خروجی: } (b, (S, c))
+    \end{align}
+    \item \textbf{تابع کاهش}: ورودی کاهنده برای کلید $b$ شامل تمام مقادیر مرتبط با $b$ از هر دو رابطه است:
+    \begin{equation}
+    (b, [(R, a_1), (R, a_2), \dots, (S, c_1), (S, c_2), \dots])
+    \end{equation}
+    کاهنده لیست را به دو زیرمجموعه بر حسب برچسب $R$ و $S$ تقسیم کرده و حاصل‌ضرب دکارتی آن‌ها را تولید می‌کند: به ازای هر $a \in R$ و هر $c \in S$، تاپل $(a, b, c)$ را منتشر می‌نماید.
+\end{itemize}
+\end{algorithmbox}
+
+\subsection{گروه‌بندی و تجمیع \texorpdfstring{\enparen{Grouping and Aggregation}}{(Grouping and Aggregation)}}
+فرض کنید رابطه $R(A, B, C)$ را داریم و می‌خواهیم عملگر $\gamma_{A, \text{SUM}(B)}(R)$ (معادل دستور \lr{\texttt{SELECT A, SUM(B) FROM R GROUP BY A}}) را در نگاشت-کاهش پیاده کنیم:
+\begin{itemize}
+    \item \textbf{تابع نگاشت}: برای هر تاپل $(a, b, c)$، خروجی جفت $(a, b)$ خواهد بود.
+    \item \textbf{تابع ترکیب‌کننده \enparen{Combiner}}: در حافظه ماشین مپر، مجموع مقادیر $b$ به ازای هر $a$ محاسبه و جمع محلی ارسال می‌شود.
+    \item \textbf{تابع کاهش}: به ازای هر کلید $a$، لیست مقادیر $[b_1, b_2, \dots]$ جمع زده شده و جفت $(a, \sum b_i)$ منتشر می‌گردد.
+\end{itemize}
+
+\subsection{ضرب ماتریس در بردار \texorpdfstring{\enparen{Matrix-Vector Multiplication}}{(Matrix-Vector Multiplication)}}
+مسئله ضرب ماتریس بزرگ $M$ با ابعاد $n \times n$ در بردار $v$ به طول $n$ (که در فصل پنجم برای الگوریتم PageRank حیاتی است):
+\begin{equation}
+x_i = \sum_{j=1}^n m_{ij} v_j
+\end{equation}
+
+\textbf{حالت اول: بردار $v$ در حافظه اصلی هر مپر جا می‌شود:}
+\begin{itemize}
+    \item هر مپر یک سطر یا مجموعه‌ای از درایه‌های ماتریس $m_{ij}$ را می‌خواند.
+    \item مپر بلافاصله حاصل‌ضرب $m_{ij} v_j$ را محاسبه کرده و جفت $(i, m_{ij} v_j)$ را به عنوان خروجی صادر می‌کند.
+    \item کاهنده تمام مقادیر با کلید $i$ را جمع می‌زند تا درایه نهایی $x_i$ محاسبه شود.
+\end{itemize}
+
+\textbf{حالت دوم: بردار $v$ در حافظه جا نمی‌شود (حجم بسیار بالا):}
+ماتریس $M$ و بردار $v$ به بلوک‌های مربعی و نواری تقسیم می‌شوند. در این حالت، نگاشت‌ها بر اساس شناسه بلوک‌ها سازمان‌دهی شده و محاسبات به صورت بلوکی صورت می‌پذیرد.
+
+\subsection{ضرب دو ماتریس بزرگ در نگاشت-کاهش \texorpdfstring{\enparen{Matrix Multiplication}}{(Matrix Multiplication)}}
+فرض کنید هدف محاسبه حاصل‌ضرب دو ماتریس بزرگ $M$ با ابعاد $r \times c$ و $N$ با ابعاد $c \times p$ باشد ($P = M \times N$ به طوری که $p_{ij} = \sum_{k=1}^c m_{ik} n_{kj}$). دو الگوریتم استاندارد در مرجع MMDS برای این منظور تدوین شده است:
+
+\textbf{۱. الگوریتم دو مرحله‌ای نگاشت-کاهش \enparen{Two-Pass MapReduce}:}
+\begin{enumerate}
+    \item \textbf{گذر اول (محاسبه ضرب‌های جزئی)}:
+    \begin{itemize}
+        \item نگاشت: برای هر درایه $m_{ik}$، جفت $(k, (M, i, m_{ik}))$ و برای هر درایه $n_{kj}$، جفت $(k, (N, j, n_{kj}))$ تولید می‌شود.
+        \item کاهش: کاهنده برای کلید مشترک $k$، تمام درایه‌های سطر $k$ از $N$ و ستون $k$ از $M$ را در اختیار دارد و به ازای هر جفت، ضرب جزئی $m_{ik} n_{kj}$ را با کلید خروجی $(i, j)$ صادر می‌کند:
+        \begin{equation}
+        ((i, j), m_{ik} n_{kj})
+        \end{equation}
+    \end{itemize}
+    \item \textbf{گذر دوم (مجموع ضرب‌های جزئی)}:
+    \begin{itemize}
+        \item نگاشت: تابع همانی (خروجی گذر اول را مستقیماً عبور می‌دهد).
+        \item کاهش: به ازای هر کلید $(i, j)$، تمام ضرب‌های جزئی دریافتی را با یکدیگر جمع کرده و درایه نهایی $p_{ij} = \sum_{k=1}^c m_{ik} n_{kj}$ را در فایل خروجی ذخیره می‌کند.
+    \end{itemize}
+\end{enumerate}
+
+\textbf{۲. الگوریتم تک‌مرحله‌ای \enparen{One-Pass MapReduce}:}
+اگر اولویت کاهش تعداد گذرها و زمان پایان باشد:
+\begin{itemize}
+    \item هر درایه $m_{ik}$ توسط مپر به $p$ نسخه تکثیر شده و با کلیدهای $((i, 1), (M, k, m_{ik}))$ تا $((i, p), (M, k, m_{ik}))$ صادر می‌گردد.
+    \item هر درایه $n_{kj}$ نیز به $r$ نسخه با کلیدهای $((1, j), (N, k, n_{kj}))$ تا $((r, j), (N, k, n_{kj}))$ تکثیر می‌شود.
+    \item ردیوسر متناظر با کلید $(i, j)$، کل سطر $i$ از $M$ و کل ستون $j$ از $N$ را به یکباره دریافت کرده و $p_{ij}$ را مستقیماً در یک گام محاسبه می‌نماید (این روش ترافیک مپر به شبکه را به اندازه ابعاد ضرب افزایش می‌دهد).
+\end{itemize}
+
+\begin{examnote}
+در تحلیل هزینه الگوریتم‌های MapReduce در آزمون، دو معیار اساسی وجود دارد:
+۱. \textbf{هزینه ارتباطات \enparen{Communication Cost}}: برابر است با مجموع اندازه فایل‌های خروجی تمام مپرها که باید از طریق شبکه به سمت ردیوسرها منتقل شوند.
+۲. \textbf{هزینه زمانی سپری‌شده \enparen{Elapsed Time}}: بیشترین زمان صرف‌شده در طولانی‌ترین مسیر اجرای یک گره، که نشان‌دهنده گلوگاه اصلی محاسبات موازی است.
+\end{examnote}
+
+\begin{summarybox}[جمع‌بندی فصل دوم]
+\begin{itemize}
+    \item مدل نگاشت-کاهش پردازش داده‌های در مقیاس پتابایت را با تکیه بر سخت‌افزارهای تجاری ارزان و تحمل خطای خودکار میسر می‌سازد.
+    \item سیستم‌های فایل توزیع‌شده \enparen{HDFS} با تکثیر بلوک‌ها تضمین پایایی داده را بر عهده دارند.
+    \item توابع Combiner و Partitioner نقش حیاتی در بهینه‌سازی پهنای باند و تعادل بار شبکه ایفا می‌کنند.
+    \item پیوند طبیعی، گروه‌بندی و ضرب‌های ماتریسی به سادگی و کارایی در قالب یک یا چند گام نگاشت-کاهش مدل‌سازی می‌شوند.
+\end{itemize}
+\end{summarybox}

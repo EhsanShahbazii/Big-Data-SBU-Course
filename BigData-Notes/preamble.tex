@@ -1,0 +1,191 @@
+% ==============================================================================
+% Preamble for Big Data Persian Course Notes (Mining of Massive Datasets)
+% ==============================================================================
+
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    top=2.0cm,
+    bottom=2.0cm,
+    inner=2.0cm,
+    outer=1.8cm,
+    headheight=14pt,
+    footskip=0.8cm
+}
+
+% Tolerances and line breaking for smooth text justification
+\emergencystretch=3em
+\tolerance=2000
+\hbadness=5000
+
+% Mathematical packages
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{bm}
+
+% Graphics and Drawing
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows.meta,positioning,calc,fit,backgrounds,trees,decorations.pathreplacing}
+
+% Tables
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+% Colors and Boxes
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+
+\definecolor{primaryblue}{RGB}{24, 76, 120}
+\definecolor{accentteal}{RGB}{0, 128, 128}
+\definecolor{defblue}{RGB}{28, 90, 160}
+\definecolor{thmgreen}{RGB}{34, 120, 74}
+\definecolor{exorange}{RGB}{204, 102, 0}
+\definecolor{notered}{RGB}{180, 40, 40}
+\definecolor{algogrey}{RGB}{70, 80, 95}
+\definecolor{lightgraybg}{RGB}{248, 249, 250}
+
+% Custom Styled Academic Environments
+\newtcolorbox[auto counter, number within=chapter]{definition}[1][]{%
+    enhanced,
+    breakable,
+    colback=defblue!4!white,
+    colframe=defblue,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={تعریف \thetcbcounter\ifstrempty{#1}{}{: #1}},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=defblue, arc=2mm},
+    arc=2mm,
+    boxrule=1pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+\newtcolorbox[auto counter, number within=chapter]{theorem}[1][]{%
+    enhanced,
+    breakable,
+    colback=thmgreen!4!white,
+    colframe=thmgreen,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={قضیه \thetcbcounter\ifstrempty{#1}{}{: #1}},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=thmgreen, arc=2mm},
+    arc=2mm,
+    boxrule=1pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+\newtcolorbox[auto counter, number within=chapter]{lemma}[1][]{%
+    enhanced,
+    breakable,
+    colback=thmgreen!3!white,
+    colframe=thmgreen!80!black,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={لم \thetcbcounter\ifstrempty{#1}{}{: #1}},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=thmgreen!80!black, arc=2mm},
+    arc=1.5mm,
+    boxrule=0.9pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+\newtcolorbox[auto counter, number within=chapter]{example}[1][]{%
+    enhanced,
+    breakable,
+    colback=exorange!4!white,
+    colframe=exorange!90!black,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={مثال کاربردی \thetcbcounter\ifstrempty{#1}{}{: #1}},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=exorange!90!black, arc=2mm},
+    arc=2mm,
+    boxrule=0.9pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+\newtcolorbox[auto counter, number within=chapter]{algorithmbox}[1][]{%
+    enhanced,
+    breakable,
+    colback=algogrey!5!white,
+    colframe=algogrey,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={الگوریتم \thetcbcounter\ifstrempty{#1}{}{: #1}},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=algogrey, arc=2mm},
+    arc=2mm,
+    boxrule=1pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+\newtcolorbox{examnote}[1][نکته امتحانی و کلیدی]{%
+    enhanced,
+    breakable,
+    colback=notered!4!white,
+    colframe=notered,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={#1},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=notered, arc=2mm},
+    arc=2mm,
+    boxrule=1pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+\newtcolorbox{summarybox}[1][جمع‌بندی فصل و نکات کلیدی]{%
+    enhanced,
+    breakable,
+    colback=primaryblue!5!white,
+    colframe=primaryblue,
+    coltitle=white,
+    fonttitle=\bfseries,
+    title={#1},
+    attach boxed title to top right={yshift=-2mm, xshift=-4mm},
+    boxed title style={colback=primaryblue, arc=2mm},
+    arc=2mm,
+    boxrule=1.2pt,
+    top=4mm, bottom=3mm, left=3mm, right=3mm
+}
+
+% Header and Footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\leftmark}
+\fancyhead[LO]{\rightmark}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% Hyperref setup
+\usepackage[colorlinks=true,
+            linkcolor=primaryblue,
+            citecolor=accentteal,
+            urlcolor=defblue,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            pdfauthor={احسان شهبازی (Ehsan Shahbazi)},
+            pdftitle={مبانی و الگوریتم‌های کلان‌داده (Mining of Massive Datasets)}]{hyperref}
+
+% XePersian must be the very last package loaded
+\usepackage{xepersian}
+
+% Persian Fonts
+\settextfont[
+    BoldFont=Vazirmatn-Bold,
+    MediumFont=Vazirmatn-Medium,
+    LightFont=Vazirmatn-Light
+]{Vazirmatn}
+
+\setlatintextfont{Times New Roman}
+\setdigitfont{Vazirmatn}
+
+% Macro for typesetting English words and acronyms inside parentheses cleanly in Persian text
+\newcommand{\enparen}[1]{\mbox{\lr{)}\lr{#1}\lr{(}}}

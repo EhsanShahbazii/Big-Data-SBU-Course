@@ -1,0 +1,237 @@
+\chapter{تحلیل پیوندها و رتبه‌بندی وب \texorpdfstring{\enparen{Link Analysis \& PageRank}}{(Link Analysis \& PageRank)}}
+\label{ch:link-analysis}
+
+\section{مقدمه: گراف وب و چالش بازیابی اطلاعات}
+در روزهای آغازین وب، موتورهای جستجوی اولیه (نظیر Altavista و Lycos) اسناد را صرفاً بر پایه تطابق متنی و شمارش کلمات کلیدی (مشابه شاخص TF-IDF) رتبه‌بندی می‌کردند. این رویکرد به سرعت با شکست مواجه شد؛ زیرا طراحان سایت‌ها با تکرار هزاران باره کلمات کلیدی پرجستجو با رنگ سفید در پس‌زمینه سفید، نتایج موتورهای جستجو را فریب می‌دادند (پدیده هرزنامه متنی وب\footnote{\lr{Web Term Spam}}).
+
+انقلاب واقعی زمانی رخ داد که لری پیج و سرگئی برین، بنیان‌گذاران گوگل، دریافتند که وب صرفاً مجموعه‌ای از اسناد متنی مجزا نیست، بلکه یک \textbf{گراف جهت‌دار عظیم} است که در آن:
+\begin{itemize}
+    \item گره‌ها صفحات وب هستند.
+    \item یال‌های جهت‌دار، ابرپیوندها\footnote{\lr{Hyperlinks}} میان صفحات هستند.
+\end{itemize}
+
+ایده بنیادین این بود: یک پیوند از صفحه $A$ به صفحه $B$، به منزله یک \textbf{رأی اعتماد}\footnote{\lr{Vote of Confidence}} از سوی نویسنده صفحه $A$ به کیفیت و اعتبار صفحه $B$ است. با این حال، ارزش همه آرا یکسان نیست؛ رأی صفحه‌ای معتبر و شناخته‌شده (نظیر دانشگاه استنفورد یا یاهو) باید وزن بسیار بیشتری نسبت به رأی یک وبلاگ تازه‌تأسیس داشته باشد. این بینش ریاضی، اساس الگوریتم \textbf{PageRank}~\cite{page1999pagerank} را تشکیل می‌دهد.
+
+\section{ساختار کلان گراف وب: مدل پاپیونی \texorpdfstring{\enparen{Bow-Tie Model}}{(Bow-Tie Model)}}
+تحقیقات تجربی بر روی ساختار گراف وب نشان داده است که این گراف دارای یک ساختار منسجم به نام \textbf{مدل پاپیونی}\footnote{\lr{Bow-Tie Architecture}} است (شکل \ref{fig:bowtie}):
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.85, every node/.style={transform shape},
+    comp/.style={draw, fill=blue!10, rounded corners, minimum height=1.3cm, minimum width=2.2cm, align=center, font=\small},
+    arrow/.style={-{Latex[length=2.5mm]}, thick}
+]
+    \node[comp, fill=orange!15] (in) at (-4.5, 0) {\rl{\textbf{مجموعه ورودی}}\\\rl{\enparen{IN}}};
+    \node[comp, fill=green!20, minimum height=2cm, minimum width=2.8cm] (scc) at (0, 0) {\rl{\textbf{هسته متصل قوی}}\\\rl{\enparen{SCC}}};
+    \node[comp, fill=purple!15] (out) at (4.5, 0) {\rl{\textbf{مجموعه خروجی}}\\\rl{\enparen{OUT}}};
+    
+    \node[comp, fill=gray!15] (tubes) at (0, -2.5) {\rl{\textbf{لوله‌ها \enparen{Tubes}}}\\\rl{مسیر مستقیم \lr{IN} به \lr{OUT}}};
+    \node[draw, dashed, rounded corners, minimum height=1.1cm, minimum width=2.2cm, align=center, font=\footnotesize] (ten1) at (-4.5, -2.5) {\rl{پیچک‌ها}\\\rl{\enparen{Tendrils}}};
+    \node[draw, dashed, rounded corners, minimum height=1.1cm, minimum width=2.2cm, align=center, font=\footnotesize] (ten2) at (4.5, -2.5) {\rl{پیچک‌ها}\\\rl{\enparen{Tendrils}}};
+    
+    \draw[arrow] (in) -- (scc);
+    \draw[arrow] (scc) -- (out);
+    \draw[arrow] (in) |- (tubes);
+    \draw[arrow] (tubes) -| (out);
+    \draw[arrow] (in) -- (ten1);
+    \draw[arrow] (ten2) -- (out);
+\end{tikzpicture}
+\caption{مدل پاپیونی ساختار گراف جهانی وب \enparen{Web Graph Bow-Tie Architecture}}
+\label{fig:bowtie}
+\end{figure}
+
+اجزای ساختار پاپیونی عبارت‌اند از:
+\begin{enumerate}
+    \item \textbf{هسته متصل قوی \enparen{SCC}}: بخشی از گراف که میان هر دو صفحه آن، یک مسیر جهت‌دار دوطرفه وجود دارد (قلب تپنده وب).
+    \item \textbf{بخش ورودی \enparen{IN}}: صفحاتی که می‌توان از آن‌ها به SCC رسید، اما هیچ مسیری از SCC به آن‌ها وجود ندارد (مانند سایت‌های شخصی جدید).
+    \item \textbf{بخش خروجی \enparen{OUT}}: صفحاتی که از طریق SCC قابل دسترسی هستند، اما هیچ پیوندی به عقب بازنمی‌گردانند (مانند صفحات قوانین یا دانلود فایل).
+    \item \textbf{پیچک‌ها و لوله‌ها (Tendrils \& Tubes)}: لوله‌ها مسیرهای مستقیمی هستند که بدون عبور از SCC، مستقیماً بخش IN را به OUT متصل می‌کنند؛ پیچک‌ها مسیرهای بن‌بست آویزان به بخش‌های جانبی هستند.
+\end{enumerate}
+
+\section{فرمول‌بندی ریاضی الگوریتم PageRank}
+
+\begin{definition}[رتبه‌بندی صفحه (PageRank اولیه)]
+فرض کنید گراف وب دارای $N$ صفحه باشد. رتبه صفحه $j$ که با $r_j$ نشان داده می‌شود، برابر است با مجموع سهم رتبه‌های صفحاتی که به $j$ پیوند داده‌اند:
+\begin{equation}
+r_j = \sum_{i \to j} \frac{r_i}{d_i}
+\end{equation}
+که در آن $d_i$ بیانگر \textbf{درجه خروجی}\footnote{\lr{Out-degree}} صفحه $i$ است؛ یعنی صفحه $i$ رتبه خود را به طور مساوی میان تمامی لینک‌های خروجی‌اش توزیع می‌کند.
+\end{definition}
+
+\subsection{بیان ماتریسی و بردار ویژه}
+برای فرمول‌بندی مسئله در قالب جبر خطی، \textbf{ماتریس انتقال تصادفی}\footnote{\lr{Stochastic Transition Matrix}} $M$ با ابعاد $N \times N$ را تعریف می‌کنیم:
+\begin{equation}
+M_{ji} = 
+\begin{cases}
+\frac{1}{d_i} & \text{اگر پیوند جهت‌دار از } i \text{ به } j \text{ وجود داشته باشد} \\
+0 & \text{در غیر این صورت}
+\end{cases}
+\end{equation}
+توجه فرمایید که ستون‌های ماتریس $M$ جمع‌شان برابر با ۱ است (ماتریس ستون-تصادفی).
+
+معادله توزیع رتبه به فرم ماتریسی زیر بازنویسی می‌شود:
+\begin{equation}
+r = M \cdot r
+\end{equation}
+این معادله نشان می‌دهد که بردار PageRank $(r)$، در واقع \textbf{بردار ویژه راست متناظر با مقدار ویژه $\lambda = 1$} برای ماتریس انتقال $M$ است. طبق نظریه زنجیره‌های مارکوف، این بردار همان \textbf{توزیع پایدار}\footnote{\lr{Stationary Distribution}} یک گردش تصادفی\footnote{\lr{Random Walk}} بی‌نهایت در گراف وب است.
+
+\subsection{الگوریتم تکرار توانی \texorpdfstring{\enparen{Power Iteration}}{(Power Iteration)}}
+برای محاسبه بردار رتبه در مقیاس وب، از روش تکرار توانی استفاده می‌شود:
+
+\begin{algorithmbox}[محاسبه PageRank با روش تکرار توانی]
+\begin{itemize}
+    \item \textbf{مقداردهی اولیه}: بردار رتبه به صورت یکنواخت مقداردهی می‌شود:
+    \begin{equation}
+    r^{(0)} = \left[ \frac{1}{N}, \frac{1}{N}, \dots, \frac{1}{N} \right]^T
+    \end{equation}
+    \item \textbf{تکرار گام‌ها}: در هر مرحله $t+1$:
+    \begin{equation}
+    r^{(t+1)} = M \cdot r^{(t)}
+    \end{equation}
+    \item \textbf{شرط توقف}: تا زمانی که تغییر بردار کمتر از آستانه خطا شود: $\|r^{(t+1)} - r^{(t)}\|_1 < \epsilon$ (معمولاً ۵۰ تا ۱۰۰ تکرار برای همگرایی کامل کافی است).
+\end{itemize}
+\end{algorithmbox}
+
+\begin{theorem}[نرخ همگرایی تکرار توانی و دومین مقدار ویژه]
+ماتریس تصادفی گوگل $A = \beta M + (1 - \beta) \frac{1}{n} \mathbf{e} \mathbf{e}^T$ یک ماتریس تصادفی ستونی مارکوف، مثبت، کاهش‌ناپذیر و نامتناوب است. طبق قضیه پرون-فرو Frobenius-Perron:
+\begin{enumerate}
+    \item بزرگ‌ترین مقدار ویژه این ماتریس دقیقاً یکتا و برابر با $\lambda_1 = 1$ است.
+    \item قدرمطلق دومین مقدار ویژه ماتریس از ضریب میرایی تبعیت می‌کند: $|\lambda_2| \le \beta$.
+    \item پس از $k$ گام تکرار توانی، مولفه خطا با نرخ هندسی $\beta^k$ منقبض می‌شود:
+    \begin{equation}
+    \|r^{(k)} - r^*\| \le C \cdot \beta^k
+    \end{equation}
+\end{enumerate}
+با انتخاب متداول $\beta = 0.85$، پس از ۵۰ تکرار مقدار خطا به زیر $0.85^{50} \approx 0.0003$ رسیده و مستقل از تعداد میلیاردها صفحه وب، همگرایی تضمین می‌گردد.
+\end{theorem}
+
+\section{ناهنجاری‌های گراف وب و راهکارهای اصلاحی}
+الگوریتم ساده فوق در مواجهه با ساختار واقعی وب با دو آسیب ساختاری مرگبار روبرو می‌شود:
+
+\subsection{۱. تله‌های عنکبوتی \texorpdfstring{\enparen{Spider Traps}}{(Spider Traps)}}
+تله عنکبوتی به مجموعه‌ای از صفحات گفته می‌شود که پیوندهایی میان خود دارند، اما هیچ پیوند خروجی به سایر صفحات وب ندارند (شکل \ref{fig:traps}).
+در هنگام گردش تصادفی، وب‌گرد وارد این حلقه شده و دیگر هرگز نمی‌تواند از آن خارج شود. در نتیجه تکرار توانی، تمامی رتبه صفحات وب جذب این تله شده و رتبه سایر صفحات به سمت صفر میل می‌کند!
+
+\subsection{۲. بن‌بست‌ها \texorpdfstring{\enparen{Dead Ends}}{(Dead Ends)}}
+بن‌بست صفحه‌ای است که هیچ پیوند خروجی ندارد $(d_i = 0)$. در این حالت، ستون متناظر در ماتریس $M$ کاملاً صفر خواهد بود؛ در نتیجه مجموع مقادیر بردار رتبه در هر تکرار کاهش می‌یابد و اصطلاحاً رتبه وب «نشت» کرده و در نهایت صفر می‌شود.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    node/.style={circle, draw, fill=blue!15, minimum size=0.9cm, font=\bfseries}
+]
+    % Spider trap
+    \node[node] (a) at (-4, 0) {A};
+    \node[node] (b) at (-2, 0) {B};
+    \draw[-{Latex[length=2.5mm]}, thick] (a) to[bend left=25] (b);
+    \draw[-{Latex[length=2.5mm]}, thick] (b) to[bend left=25] (a);
+    \node at (-3, -1) [align=center] {\rl{\small تله عنکبوتی:}\\[2pt]\rl{\footnotesize رتبه درون حلقه محبوس می‌شود}};
+    
+    % Dead end
+    \node[node] (c) at (2, 0) {C};
+    \node[node] (d) at (4, 0) {D};
+    \draw[-{Latex[length=2.5mm]}, thick] (c) -- (d);
+    \node at (3, -1) [align=center] {\rl{\small بن‌بست:}\\[2pt]\rl{\footnotesize صفحه \lr{D} لینک خروجی ندارد}};
+\end{tikzpicture}
+\caption{دو چالش اساسی گردش تصادفی: تله عنکبوتی و بن‌بست}
+\label{fig:traps}
+\end{figure}
+
+\section{الگوریتم نهایی گوگل با تله‌پورتیشن (مالیات‌گیری)}
+برای رفع تله‌های عنکبوتی و بن‌بست‌ها، مدل \textbf{گردشگر تصادفی با جهش}\footnote{\lr{Random Surfer with Teleportation}} ابداع شد.
+
+\begin{definition}[فرمول نهایی PageRank]
+فرض می‌کنیم وب‌گرد در هر گام:
+\begin{itemize}
+    \item با احتمال $\beta$، یکی از لینک‌های خروجی صفحه جاری را به صورت تصادفی دنبال می‌کند.
+    \item با احتمال $1 - \beta$، تصمیم می‌گیرد جهش کند (تله‌پورت شود) و به صورت کاملاً تصادفی و یکنواخت به یکی از $N$ صفحه موجود در سراسر وب برود.
+\end{itemize}
+معادله به‌روزرسانی رتبه به فرم زیر اصلاح می‌گردد:
+\begin{equation}
+r = \beta M r + \frac{1 - \beta}{N} \mathbf{1}
+\end{equation}
+که در آن $\mathbf{1}$ بردار ستونی از تماماً یک‌ها به طول $N$ است. ضریب $\beta$ معمولاً در بازه $0.8$ تا $0.85$ تنظیم می‌شود.
+\end{definition}
+
+اگر صفحه‌ای بن‌بست باشد $(d_i = 0)$، فرض می‌شود که با احتمال مساوی $1/N$ به تمام صفحات وب پیوند دارد؛ در نتیجه ماتریس اصلاح‌شده کاملاً تصادفی و غیرقابل تقلیل\footnote{\lr{Irreducible}} شده و بر اساس قضیه پرن-فروبنیوس\footnote{\lr{Perron-Frobenius Theorem}}، همگرایی به بردار ویژه یکتای مثبت تضمین می‌گردد.
+
+\begin{example}[محاسبه عددی PageRank با تله‌پورتیشن]
+فرض کنید گرافی با ۳ صفحه $A, B, C$ داریم که در آن:
+$A \to B, C$، $B \to C$، و $C \to A$.
+ماتریس انتقال $M$:
+\begin{equation}
+M = 
+\begin{bmatrix}
+0 & 0 & 1 \\
+1/2 & 0 & 0 \\
+1/2 & 1 & 0
+\end{bmatrix}
+\end{equation}
+با فرض $\beta = 0.8$، بردار اولیه $r^{(0)} = [1/3, 1/3, 1/3]^T$ است. سهم تله‌پورتیشن برابر با $\frac{1-\beta}{3} = \frac{0.2}{3} \approx 0.067$ خواهد بود.
+در گام اول تکرار:
+\begin{equation}
+r^{(1)} = 0.8 \begin{bmatrix} 0 & 0 & 1 \\ 1/2 & 0 & 0 \\ 1/2 & 1 & 0 \end{bmatrix} \begin{bmatrix} 1/3 \\ 1/3 \\ 1/3 \end{bmatrix} + \begin{bmatrix} 0.067 \\ 0.067 \\ 0.067 \end{bmatrix} = \begin{bmatrix} 0.267 + 0.067 \\ 0.133 + 0.067 \\ 0.400 + 0.067 \end{bmatrix} = \begin{bmatrix} 0.334 \\ 0.200 \\ 0.467 \end{bmatrix}
+\end{equation}
+با ادامه تکرارها، صفحه $C$ بالاترین رتبه را کسب می‌کند زیرا از هر دو صفحه $A$ و $B$ لینک دریافت می‌نماید.
+\end{example}
+
+\section{الگوریتم‌های پیشرفته: رتبه‌بندی حساس به موضوع و TrustRank}
+
+\subsection{PageRank وابسته به موضوع \texorpdfstring{\enparen{Topic-Sensitive PageRank}}{(Topic-Sensitive PageRank)}}
+اگر کاربری واژه «جاوا» را جستجو کند، آیا به دنبال جزیره جاوا در اندونزی است یا زبان برنامه‌نویسی جاوا؟
+در Topic-Sensitive PageRank، به جای آنکه احتمال تله‌پورتیشن به صورت یکنواخت میان تمام صفحات تقسیم شود، وب‌گرد تنها به مجموعه‌ای از صفحات معتبر مرتبط با آن موضوع خاص (مجموعه $S$) جهش می‌کند:
+\begin{equation}
+r = \beta M r + (1 - \beta) \frac{e_S}{|S|}
+\end{equation}
+که در آن $e_S$ برداری است که درایه‌های متعلق به مجموعه $S$ برابر با ۱ و سایر درایه‌ها صفر است.
+
+\subsection{مبارزه با مزارع اسپم با TrustRank}
+یک \textbf{مزرعه اسپم}\footnote{\lr{Spam Farm}} شامل یک صفحه هدف $t$ و میلیون‌ها صفحه جعلی ساخته‌شده توسط اسپمر است که همگی به $t$ لینک می‌دهند تا رتبه آن را به طور مصنوعی بالا ببرند.
+الگوریتم \textbf{TrustRank} برای مقابله با این پدیده:
+\begin{enumerate}
+    \item مجموعه‌ای از صفحات با اعتماد قطعی (دامنه‌های دانشگاهی \texttt{.edu} و دولتی \texttt{.gov}) توسط داوران انسانی انتخاب می‌شوند.
+    \item الگوریتم تله‌پورتیشن تنها جهش به این صفحات معتبر را مجاز می‌داند.
+    \item صفحات اسپم چون دور از صفحات معتبر هستند، نمره اعتماد \enparen{Trust} نزدیک به صفر دریافت می‌کنند.
+\end{enumerate}
+
+\section{الگوریتم قطب‌ها و مراجع \texorpdfstring{\enparen{HITS}}{(HITS)}}
+الگوریتم HITS که توسط جان کلینبرگ ابداع شد~\cite{kleinberg1999authoritative}، دیدگاهی دوگانه نسبت به اهمیت صفحات ارائه می‌دهد:
+
+\begin{definition}[قطب‌ها و مراجع]
+\begin{itemize}
+    \item \textbf{مرجع \enparen{Authority}}: صفحه‌ای با محتوای عمیق و ارزشمند درباره یک موضوع (دارای نمره $a$).
+    \item \textbf{قطب \enparen{Hub}}: صفحه‌ای که خود محتوای خاصی ندارد، اما لینک‌های فوق‌العاده‌ای به مراجع معتبر ارائه می‌دهد (نظیر صفحات فهرست پیوندها یا دایرکتوری‌ها، دارای نمره $h$).
+\end{itemize}
+\end{definition}
+
+رابطه بازگشتی میان قطب و مرجع:
+\begin{align}
+a &= A^T \cdot h \\
+h &= A \cdot a
+\end{align}
+که در آن $A$ ماتریس مجاورت گراف است ($A_{ij} = 1$ اگر پیوند از $i$ به $j$ باشد).
+با ترکیب این دو رابطه:
+\begin{equation}
+a = A^T (A a) = (A^T A) a \quad , \quad h = A (A^T h) = (A A^T) h
+\end{equation}
+یعنی بردار مراجع، بردار ویژه ماتریس $A^T A$ و بردار قطب‌ها، بردار ویژه ماتریس $A A^T$ است!
+
+\begin{examnote}
+مقایسه کلیدی میان PageRank و HITS در آزمون‌ها:
+\begin{enumerate}
+    \item \textbf{استقلال از پرس‌وجو}: PageRank مستقل از پرس‌وجو بوده و به صورت آفلاین برای کل وب محاسبه می‌شود؛ اما HITS وابسته به پرس‌وجو است و بر روی زیرگراف حاصل از نتایج اولیه جستجو محاسبه می‌گردد.
+    \item \textbf{حساسیت به اسپم}: HITS به شدت نسبت به دستکاری لینک‌ها (افزودن لینک‌های متقابل قطبی) آسیب‌پذیرتر از PageRank است.
+\end{enumerate}
+\end{examnote}
+
+\begin{summarybox}[جمع‌بندی فصل پنجم]
+\begin{itemize}
+    \item وب یک گراف جهت‌دار با معماری پاپیونی است.
+    \item الگوریتم PageRank با مدل‌سازی گردش تصادفی، اعتبار ساختاری صفحات را می‌سنجد.
+    \item تله‌های عنکبوتی و بن‌بست‌ها با سازوکار تله‌پورتیشن تصادفی $(\beta)$ درمان می‌شوند.
+    \item الگوریتم‌های Topic-Sensitive PageRank و TrustRank رتبه‌بندی را برای موضوعات و جلوگیری از اسپم شخصی‌سازی می‌کنند.
+    \item الگوریتم HITS صفحات را به دو طبقه مراجع و قطب‌ها تفکیک می‌نماید.
+\end{itemize}
+\end{summarybox}

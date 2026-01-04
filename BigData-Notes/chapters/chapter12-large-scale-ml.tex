@@ -1,0 +1,169 @@
+\chapter{یادگیری ماشین در مقیاس بزرگ \texorpdfstring{\enparen{Large-Scale Machine Learning}}{(Large-Scale Machine Learning)}}
+\label{ch:large-scale-ml}
+
+\section{مقدمه و چالش‌های یادگیری ماشین در کلان‌داده}
+در کاربردهای سنتی یادگیری ماشین، معمولاً با مجموعه‌داده‌هایی با اندازه متوسط روبرو هستیم که به راحتی در حافظه اصلی یک کامپیوتر بارگذاری می‌شوند. در این شرایط، مدل‌های پیچیده غیرخطی با زمان‌های آموزش چندساعته قابل استفاده هستند. اما در مسائل کلان‌داده، شرایط به کلی دگرگون می‌شود:
+\begin{itemize}
+    \item تعداد نمونه‌های آموزشی $(N)$ در مقیاس صدها میلیون یا میلیاردها رکورد است.
+    \item تعداد ابعاد و ویژگی‌ها $(d)$ ممکن است به میلیون‌ها برسد (مانند پیش‌بینی کلیک در تبلیغات یا فیلترینگ هرزنامه).
+    \item الگوریتم‌های با مرتبه زمانی $O(N^2)$ یا $O(N^3)$ (نظیر روش‌های کرنیلی سنتی در SVM) عملاً غیرقابل استفاده هستند.
+    \item \textbf{قانون طلایی یادگیری ماشین در مقیاس بزرگ}: الگوریتم آموزش باید دارای مرتبه زمانی خطی $O(N)$ باشد و ترجیحاً بتواند با \textbf{تنها یک گذر (یا تعداد بسیار معدودی گذر)} از روی داده‌ها همگرا شود.
+\end{itemize}
+
+\section{روش نزدیک‌ترین همسایه در مقیاس بزرگ \texorpdfstring{\enparen{$k$-NN}}{(k-NN)}}
+در روش نزدیک‌ترین همسایه\footnote{\lr{$k$-Nearest Neighbors ($k$-NN)}}، هیچ مرحله آموزش اولیه‌ای وجود ندارد (یادگیری تنبل\footnote{\lr{Lazy Learning}}). برای طبقه‌بندی یک نقطه جدید $x$:
+\begin{enumerate}
+    \item $k$ نقطه از داده‌های آموزشی که کمترین فاصله را تا $x$ دارند پیدا می‌شوند.
+    \item برچسب $x$ با رأی اکثریت این $k$ همسایه تعیین می‌گردد.
+\end{enumerate}
+
+\textbf{چالش در کلان‌داده}: جستجوی خطی در میان میلیاردها نقطه آموزشی برای هر پرس‌وجو به شدت کند است.
+\textbf{راهکار}: بهره‌گیری از تکنیک‌های فصل سوم، به‌ویژه \textbf{درهم‌سازی حساس به مکان \enparen{LSH}} به عنوان یک شاخص پیشرفته؛ بدین ترتیب، بدون نیاز به مقایسه با تمام نقاط، نزدیک‌ترین همسایه‌ها در زمان زیرخطی $O(\log N)$ یا حتی زمان ثابت $O(1)$ بازیابی می‌شوند.
+
+\section{طبقه‌بندی خطی و الگوریتم پرسپترون \texorpdfstring{\enparen{Perceptron}}{(Perceptron)}}
+در طبقه‌بندی دودویی، داده‌ها به صورت جفت‌های $(x_i, y_i)$ داده شده‌اند که در آن $x_i \in \mathbb{R}^d$ بردار ویژگی و $y_i \in \{-1, +1\}$ برچسب کلاس است.
+هدف، یافتن یک ابرصفحه جداکننده\footnote{\lr{Separating Hyperplane}} است:
+\begin{equation}
+f(x) = \text{sign}(w \cdot x + b)
+\end{equation}
+که در آن $w$ بردار وزن‌ها و $b$ مقدار انحراف (بایاس) است.
+
+\begin{algorithmbox}[الگوریتم پرسپترون]
+\begin{enumerate}
+    \item بردار وزن را صفر قرار دهید: $w = \mathbf{0}$ و $b = 0$.
+    \item داده‌های آموزشی را به صورت متوالی پیمایش کنید. برای هر نمونه $(x_i, y_i)$:
+    \begin{itemize}
+        \item مقدار پیش‌بینی را محاسبه کنید: $\hat{y} = \text{sign}(w \cdot x_i + b)$.
+        \item اگر پیش‌بینی اشتباه بود $(y_i (w \cdot x_i + b) \le 0)$:
+        \begin{align}
+        w &\leftarrow w + \eta \cdot y_i \cdot x_i \\
+        b &\leftarrow b + \eta \cdot y_i
+        \end{align}
+        (که در آن $\eta > 0$ نرخ یادگیری است).
+    \end{itemize}
+    \item تکرار تا زمان همگرایی کامل یا رسیدن به سقف تکرارها.
+\end{enumerate}
+\end{algorithmbox}
+
+\begin{theorem}[قضیه همگرایی پرسپترون (نوویکف)]
+اگر داده‌ها به صورت خطی تفکیک‌پذیر\footnote{\lr{Linearly Separable}} باشند، یعنی ابرصفحه‌ای با حاشیه اطمینان $\gamma > 0$ وجود داشته باشد به طوری که $y_i (w^* \cdot x_i) \ge \gamma$ به ازای $\|w^*\| = 1$، آنگاه الگوریتم پرسپترون حداکثر پس از:
+\begin{equation}
+M \le \left( \frac{R}{\gamma} \right)^2
+\end{equation}
+خطا همگرا می‌شود، که در آن $R = \max_i \|x_i\|$ شعاع کوچک‌ترین کره دربرگیرنده داده‌ها است.
+\end{theorem}
+اما اگر داده‌ها خطی تفکیک‌پذیر نباشند، پرسپترون هرگز همگرا نشده و تا ابد دچار نوسان می‌شود.
+
+\section{ماشین‌های بردار پشتیبان در مقیاس بزرگ \texorpdfstring{\enparen{SVM}}{(SVM)}}
+ماشین بردار پشتیبان\footnote{\lr{Support Vector Machine (SVM)}} نه تنها به دنبال یک ابرصفحه جداکننده است، بلکه \textbf{بهترین و مطمئن‌ترین ابرصفحه} را جستجو می‌کند؛ یعنی ابرصفحه‌ای که بیشترین فاصله حاشیه\footnote{\lr{Margin}} را از نزدیک‌ترین نقاط داده‌های آموزشی داشته باشد (شکل \ref{fig:svm-margin}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape}
+]
+    % Separating line
+    \draw[thick, blue!80!black] (-3.5, -1.75) -- (3.5, 1.75) node[right, font=\small] {$w \cdot x + b = 0$};
+    % Margin lines
+    \draw[dashed, red!80!black] (-3.5, -0.75) -- (3.5, 2.75) node[right, font=\small] {$w \cdot x + b = +1$};
+    \draw[dashed, red!80!black] (-3.5, -2.75) -- (3.5, 0.75) node[right, font=\small] {$w \cdot x + b = -1$};
+    
+    % Positive points
+    \filldraw[green!60!black] (-1.8, 2.0) circle (3pt);
+    \filldraw[green!60!black] (0.8, 2.7) circle (3pt);
+    \filldraw[green!60!black] (-0.8, 1.6) circle (3pt);
+    \node[above=3pt, font=\footnotesize] at (-0.8, 1.6) {\rl{بردار پشتیبان}};
+    
+    % Negative points
+    \filldraw[orange!90!black] (-1.2, -2.6) circle (3pt);
+    \filldraw[orange!90!black] (1.8, -1.6) circle (3pt);
+    \filldraw[orange!90!black] (0.8, -0.6) circle (3pt);
+    \node[below=3pt, font=\footnotesize] at (0.8, -0.6) {\rl{بردار پشتیبان}};
+    
+    % Margin arrow
+    \coordinate (m_neg) at (-1.2, -1.6);
+    \coordinate (m_pos) at (-2.0, 0.0);
+    \draw[<->, thick, purple!80!black] (m_neg) -- (m_pos) 
+        node[midway, left=4pt, fill=white, fill opacity=0.85, text opacity=1, inner sep=2pt, font=\footnotesize] 
+        {\rl{حاشیه} $\frac{2}{\|w\|}$};
+\end{tikzpicture}
+\caption{ابرصفحه با حاشیه بیشینه در ماشین‌های بردار پشتیبان \enparen{SVM}}
+\label{fig:svm-margin}
+\end{figure}
+
+فاصله حاشیه هندسی برابر با $\frac{2}{\|w\|}$ است. بنابراین، بیشینه‌سازی حاشیه معادل است با کمینه‌سازی $\|w\|^2$.
+
+\subsection{فرم نرم حاشیه و تابع هزینه لولا \texorpdfstring{\enparen{Hinge Loss}}{(Hinge Loss)}}
+در مسائل واقعی کلان‌داده، داده‌ها نویزی هستند و تفکیک‌پذیری کامل خطی ناممکن است. با تعریف متغیرهای لغزش\footnote{\lr{Slack Variables}} $\xi_i \ge 0$، به داده‌ها اجازه نقض حاشیه با پرداخت جریمه داده می‌شود:
+\begin{equation}
+\min_{w, b, \xi} \frac{1}{2} \|w\|^2 + C \sum_{i=1}^N \xi_i \quad \text{به شرط } y_i(w \cdot x_i + b) \ge 1 - \xi_i , \quad \xi_i \ge 0
+\end{equation}
+مقدار بهینه متغیر لغزش دقیقاً برابر با \textbf{تابع هزینه لولا}\footnote{\lr{Hinge Loss}} است:
+\begin{equation}
+\xi_i = \max\Big(0, 1 - y_i (w \cdot x_i + b)\Big)
+\end{equation}
+بدین ترتیب، مسئله مقید SVM به یک مسئله بهینه‌سازی نامقید با تابع هدف منظم‌شده تبدیل می‌گردد:
+\begin{equation}
+\min_{w, b} \mathcal{L}(w, b) = \frac{\lambda}{2} \|w\|^2 + \frac{1}{N} \sum_{i=1}^N \max\Big(0, 1 - y_i (w \cdot x_i + b)\Big)
+\end{equation}
+که در آن $\lambda = \frac{1}{C \cdot N}$ ضریب منظم‌سازی است.
+
+\section{بهینه‌سازی در مقیاس بزرگ با گرادیان کاهشی تصادفی \texorpdfstring{\enparen{SGD}}{(SGD)}}
+الگوریتم گرادیان کاهشی استاندارد \enparen{Batch Gradient Descent} در هر گام نیازمند محاسبه گرادیان روی تک‌تک $N$ نمونه آموزشی است که برای $N = 10^9$ کاملاً غیرممکن است.
+در مقابل، \textbf{گرادیان کاهشی تصادفی}\footnote{\lr{Stochastic Gradient Descent (SGD)}} در هر گام تنها \textbf{یک نمونه تصادفی} را بررسی کرده و وزن‌ها را فوراً به‌روزرسانی می‌کند.
+
+\begin{algorithmbox}[الگوریتم Pegasos (SGD برای آموزش SVM در مقیاس بزرگ)]
+\begin{itemize}
+    \item \textbf{ورودی}: داده‌های آموزشی، پارامتر منظم‌سازی $\lambda$، و تعداد کل گام‌ها $T$.
+    \item \textbf{مقداردهی اولیه}: $w_1 = \mathbf{0}$.
+    \item \textbf{حلقه تکرار}: برای $t = 1, 2, \dots, T$:
+    \begin{enumerate}
+        \item یک نمونه تصادفی $(x_t, y_t)$ از میان داده‌ها برگزینید.
+        \item نرخ یادگیری در گام جاری را تنظیم کنید: $\eta_t = \frac{1}{\lambda \cdot t}$.
+        \item شرط حاشیه را بررسی نمایید:
+        \begin{itemize}
+            \item \textbf{حالت اول: نمونه به درستی و خارج از حاشیه قرار دارد} $(y_t (w_t \cdot x_t) \ge 1)$:
+            \begin{equation}
+            w_{t+1} = (1 - \eta_t \lambda) w_t = \left( 1 - \frac{1}{t} \right) w_t
+            \end{equation}
+            (تنها انقباض وزنی برای منظم‌سازی اعمال می‌شود).
+            
+            \item \textbf{حالت دوم: نقض حاشیه یا خطای طبقه‌بندی} $(y_t (w_t \cdot x_t) < 1)$:
+            \begin{equation}
+            w_{t+1/2} = (1 - \eta_t \lambda) w_t + \eta_t y_t x_t
+            \end{equation}
+        \end{itemize}
+        \item \textbf{تصویرسازی بر روی گوی بهینه \enparen{Projection Step}}:
+        جهت تضمین تئوریک نرخ همگرایی، بردار وزن به درون گوی به شعاع $1/\sqrt{\lambda}$ تصویر می‌شود:
+        \begin{equation}
+        w_{t+1} = \min\left(1, \frac{1/\sqrt{\lambda}}{\|w_{t+1/2}\|}\right) w_{t+1/2}
+        \end{equation}
+    \end{enumerate}
+\end{itemize}
+\end{algorithmbox}
+
+\begin{examnote}
+ویژگی‌های خیره‌کننده SGD برای کلان‌داده:
+\begin{enumerate}
+    \item \textbf{استقلال زمان همگرایی از تعداد کل نمونه‌ها}: اثبات شده است که تعداد گام‌های لازم برای رسیدن به خطای $\epsilon$ از مرتبه $O(1/\epsilon)$ است و هیچ وابستگی به اندازه کل مجموعه‌داده $N$ ندارد!
+    \item \textbf{آموزش در یک گذر \enparen{Streaming ML}}: داده‌ها می‌توانند به صورت جریانی مستقیماً از روی دیسک یا شبکه خوانده شوند؛ هر نمونه پس از یک بار به‌روزرسانی دور ریخته می‌شود، بدون آنکه نیازی به ذخیره مجدد آن باشد.
+\end{enumerate}
+\end{examnote}
+
+\section{موازی‌سازی یادگیری ماشین در نگاشت-کاهش}
+برای توزیع آموزش مدل‌های یادگیری بر روی خوشه‌های چند هزار ماشینی:
+\begin{itemize}
+    \item داده‌ها میان $M$ مپر تقسیم می‌شوند.
+    \item هر مپر یک مدل مجزا یا گرادیان‌های محلی بر روی بسته خود \enparen{Mini-batch} را محاسبه می‌کند.
+    \item در مرحله کاهش، وزن‌ها یا گرادیان‌ها تجمیع شده و میانگین آن‌ها گرفته می‌شود (الگوریتم Parameter Server یا AllReduce).
+\end{itemize}
+
+\begin{summarybox}[جمع‌بندی فصل دوازدهم]
+\begin{itemize}
+    \item یادگیری ماشین در کلان‌داده نیازمند الگوریتم‌های با پیچیدگی خطی و کمترین تعداد گذر از روی دیسک است.
+    \item تکنیک LSH اجرای سریع روش $k$-NN را در ابعاد بالا ممکن می‌سازد.
+    \item الگوریتم پرسپترون با تفکیک‌پذیری خطی همگرا می‌شود اما در صورت وجود نویز دچار ناپایداری است.
+    \item ماشین بردار پشتیبان با بیشینه‌سازی حاشیه و استفاده از تابع هزینه لولا، طبقه‌بندی مقاومی ارائه می‌دهد.
+    \item الگوریتم SGD امکان آموزش برخط مدل‌های خطی را در مقیاس میلیاردها نمونه با مرتبه زمانی مستقل از $N$ میسر می‌سازد.
+\end{itemize}
+\end{summarybox}

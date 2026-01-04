@@ -1,0 +1,27 @@
+# OS artifacts
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
+
+# TeX artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+BigData-Notes/*.aux
+BigData-Notes/*.log
+BigData-Notes/*.out
+BigData-Notes/*.toc
+BigData-Notes/*.bbl
+BigData-Notes/*.blg
+
+# Raw source PDFs (heavy assets)
+raw_sources/
+
+# Scratch and temporary rendering caches
+scratch/
