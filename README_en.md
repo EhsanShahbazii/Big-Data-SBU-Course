@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/banner_social.png" alt="Mining of Massive Datasets Banner" width="100%" style="border-radius:12px; margin-bottom:16px;" />
+</div>
+
 # Mining of Massive Datasets & Big Data Algorithms (Course Notes)
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=flat&logo=github)](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)

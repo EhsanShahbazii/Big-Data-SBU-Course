@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/banner_social.png" alt="بنر دوره کلان‌داده دانشگاه شهید بهشتی" width="100%" style="border-radius:12px; margin-bottom:16px;" />
+</div>
+
 # مبانی و الگوریتم‌های کلان‌داده (Mining of Massive Datasets)
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=flat&logo=github)](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)
