@@ -1,6 +1,6 @@
 # مبانی و الگوریتم‌های کلان‌داده (Mining of Massive Datasets)
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=flat&logo=github)](https://ehsanshahbazii.github.io/Big-Data-Course/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=flat&logo=github)](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)
 [![PDF Download](https://img.shields.io/badge/Full%20Book-PDF%20(81%20Pages)-0d9488?style=flat&logo=adobeacrobatreader)](pdf/full/BigData_Course_Notes_Full.pdf)
 [![Compiler](https://img.shields.io/badge/Compiler-Ehsan%20Shahbazi-7c3aed?style=flat&logo=googlescholar)](https://github.com/EhsanShahbazii)
 [![Engine](https://img.shields.io/badge/XeLaTeX-xepersian-orange?style=flat)](https://ctan.org/pkg/xepersian)
@@ -8,7 +8,7 @@
 
 > [!NOTE]
 > برای مطالعه نسخه انگلیسی این راهنما، به [README_en.md](README_en.md) مراجعه فرمایید.  
-> جهت مشاهده و دانلود تعاملی فصول به صورت آنلاین، به **[پرتال رسمی گیت‌هاب پیجز](https://ehsanshahbazii.github.io/Big-Data-Course/)** مراجعه کنید.
+> جهت مشاهده و دانلود تعاملی فصول به صورت آنلاین، به **[پرتال رسمی گیت‌هاب پیجز](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)** مراجعه کنید.
 
 ---
 

@@ -5,11 +5,11 @@
 
 [![Language: Persian](https://img.shields.io/badge/Language-فارسی%20(FA)-blue?style=for-the-badge)](README_fa.md)
 [![Language: English](https://img.shields.io/badge/Language-English%20(EN)-emerald?style=for-the-badge)](README_en.md)
-[![Live GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=for-the-badge&logo=github)](https://ehsanshahbazii.github.io/Big-Data-Course/)
+[![Live GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=for-the-badge&logo=github)](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)
 [![PDF Download](https://img.shields.io/badge/Full%20PDF-81%20Pages-0d9488?style=for-the-badge&logo=adobeacrobatreader)](pdf/full/BigData_Course_Notes_Full.pdf)
 
 **گردآورنده و پژوهشگر / Compiler:** [**احسان شهبازی (Ehsan Shahbazi)**](https://github.com/EhsanShahbazii)  
-📧 [ehsan.shahbazipc@gmail.com](mailto:ehsan.shahbazipc@gmail.com) | 🌐 [GitHub Profile](https://github.com/EhsanShahbazii)
+📧 [ehsan.shahbazipc@gmail.com](mailto:ehsan.shahbazipc@gmail.com) | 🌐 [GitHub Profile](https://github.com/EhsanShahbazii) | 📦 [Repository](https://github.com/EhsanShahbazii/Big-Data-SBU-Course)
 
 </div>
 
@@ -28,7 +28,7 @@
 
 تمامی فصول، خلاصه درس‌ها، جزوات فصل‌به‌فصل و فایل‌های PDF به صورت کاملاً تعاملی با تم تاریک/روشن و جستجوی زنده در پرتال گیت‌هاب پیجز در دسترس هستند:
 
-👉 **[ورود به پرتال آنلاین گیت‌هاب پیجز (Live Portal)](https://ehsanshahbazii.github.io/Big-Data-Course/)**
+👉 **[ورود به پرتال آنلاین گیت‌هاب پیجز (Live Portal)](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)**
 
 ---
 

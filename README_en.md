@@ -1,6 +1,6 @@
 # Mining of Massive Datasets & Big Data Algorithms (Course Notes)
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=flat&logo=github)](https://ehsanshahbazii.github.io/Big-Data-Course/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Portal-2563eb?style=flat&logo=github)](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)
 [![PDF Download](https://img.shields.io/badge/Full%20Book-PDF%20(81%20Pages)-0d9488?style=flat&logo=adobeacrobatreader)](pdf/full/BigData_Course_Notes_Full.pdf)
 [![Compiler](https://img.shields.io/badge/Compiler-Ehsan%20Shahbazi-7c3aed?style=flat&logo=googlescholar)](https://github.com/EhsanShahbazii)
 [![Engine](https://img.shields.io/badge/XeLaTeX-xepersian-orange?style=flat)](https://ctan.org/pkg/xepersian)
@@ -8,7 +8,7 @@
 
 > [!NOTE]
 > For Persian documentation, please see [README_fa.md](README_fa.md).  
-> To explore chapters, read summaries, and preview PDFs interactively in your browser, visit the **[Official GitHub Pages Portal](https://ehsanshahbazii.github.io/Big-Data-Course/)**.
+> To explore chapters, read summaries, and preview PDFs interactively in your browser, visit the **[Official GitHub Pages Portal](https://ehsanshahbazii.github.io/Big-Data-SBU-Course/)**.
 
 ---
 
