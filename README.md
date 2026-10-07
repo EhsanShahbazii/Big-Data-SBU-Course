@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/banner_social.png" alt="Mining of Massive Datasets Banner" width="100%" style="border-radius:12px; margin-bottom:16px;" />
+</div>
+
 # مبانی و الگوریتم‌های کلان‌داده (Mining of Massive Datasets)
 ### Graduate Course Notes & Algorithmic Foundations for Big Data
 
